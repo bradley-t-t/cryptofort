@@ -51,7 +51,13 @@ describe('SqliteAdapter', () => {
   it('searchMeta matches name/description/provider/tags and omits secrets', async () => {
     await a.insert(row());
     await a.insert(
-      row({ id: 'id-2', name: 'openai-key', provider: 'openai', tags: ['ai'], description: 'OpenAI' }),
+      row({
+        id: 'id-2',
+        name: 'openai-key',
+        provider: 'openai',
+        tags: ['ai'],
+        description: 'OpenAI',
+      }),
     );
     const hits = await a.searchMeta('stripe', {});
     expect(hits.map((h) => h.name)).toEqual(['stripe-key']);

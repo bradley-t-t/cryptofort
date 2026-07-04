@@ -1,11 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { CredentialStore } from './types.js';
-import type {
-  CredentialMeta,
-  ListOptions,
-  SealedRecord,
-  SearchOptions,
-} from '../types.js';
+import type { CredentialMeta, ListOptions, SealedRecord, SearchOptions } from '../types.js';
 
 const TABLE = 'cryptofort_credentials';
 

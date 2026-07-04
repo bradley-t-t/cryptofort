@@ -1,10 +1,5 @@
 import type { CredentialStore } from './types.js';
-import type {
-  CredentialMeta,
-  ListOptions,
-  SealedRecord,
-  SearchOptions,
-} from '../types.js';
+import type { CredentialMeta, ListOptions, SealedRecord, SearchOptions } from '../types.js';
 
 /**
  * Structural subset of porsager `postgres`. Two call forms:

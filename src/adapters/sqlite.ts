@@ -1,11 +1,6 @@
 import Database from 'better-sqlite3';
 import type { CredentialStore } from './types.js';
-import type {
-  CredentialMeta,
-  ListOptions,
-  SealedRecord,
-  SearchOptions,
-} from '../types.js';
+import type { CredentialMeta, ListOptions, SealedRecord, SearchOptions } from '../types.js';
 
 interface Db {
   exec(sql: string): unknown;

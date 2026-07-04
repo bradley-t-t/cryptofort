@@ -1,9 +1,4 @@
-import type {
-  CredentialMeta,
-  ListOptions,
-  SealedRecord,
-  SearchOptions,
-} from '../types.js';
+import type { CredentialMeta, ListOptions, SealedRecord, SearchOptions } from '../types.js';
 
 /** Persistence contract. Implementations treat the sealed secret as opaque. */
 export interface CredentialStore {
