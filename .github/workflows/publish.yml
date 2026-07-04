@@ -1,8 +1,8 @@
 name: Publish package
 
-# Publishes @bradley-t-t/cryptofort to GitHub Packages when a GitHub Release is
-# published, or on manual dispatch. Uses the automatic GITHUB_TOKEN — no secrets
-# to manage. The package name must stay scoped to the repository owner.
+# On a published GitHub Release (or manual dispatch), publish to BOTH registries:
+#   - npm as the canonical unscoped `cryptofort` (needs an NPM_TOKEN repo secret)
+#   - GitHub Packages as `@bradley-t-t/cryptofort` (scope required; uses GITHUB_TOKEN)
 on:
   release:
     types: [published]
@@ -11,9 +11,25 @@ on:
 permissions:
   contents: read
   packages: write
+  id-token: write
 
 jobs:
-  publish:
+  npm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+      - run: npm install
+      - run: npm run build
+      - run: npm test
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  github-packages:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,7 +39,9 @@ jobs:
           registry-url: https://npm.pkg.github.com
       - run: npm install
       - run: npm run build
-      - run: npm test
+      # GitHub Packages requires the owner scope, so publish under the scoped name.
+      - run: npm pkg set name=@bradley-t-t/cryptofort
+      - run: npm pkg delete publishConfig.registry
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

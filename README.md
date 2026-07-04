@@ -13,8 +13,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/bradley-t-t/cryptofort/pkgs/npm/cryptofort"><img src="https://img.shields.io/badge/GitHub%20Packages-published-2563eb?style=for-the-badge&logo=github&logoColor=white" alt="GitHub Packages" /></a>
-  <img src="https://img.shields.io/badge/version-0.1.0-2563eb?style=for-the-badge" alt="Version" />
+  <a href="https://www.npmjs.com/package/cryptofort"><img src="https://img.shields.io/npm/v/cryptofort?style=for-the-badge&color=2563eb&logo=npm&logoColor=white" alt="npm" /></a>
+  <a href="https://github.com/bradley-t-t/cryptofort/pkgs/npm/cryptofort"><img src="https://img.shields.io/badge/GitHub%20Packages-@bradley--t--t-2563eb?style=for-the-badge&logo=github&logoColor=white" alt="GitHub Packages" /></a>
   <img src="https://img.shields.io/badge/license-MIT-2563eb?style=for-the-badge" alt="License" />
   <img src="https://img.shields.io/badge/node-%3E%3D20-2563eb?style=for-the-badge" alt="Node >=20" />
   <img src="https://img.shields.io/badge/AES--256--GCM-encrypted-1f56cf?style=for-the-badge" alt="AES-256-GCM" />
@@ -48,25 +48,32 @@ Secrets sprawl across `.env` files, shell history, and plaintext columns — and
 
 ## Install
 
-CryptoFort is published to **GitHub Packages**. Point the `@bradley-t-t` scope at the GitHub registry and authenticate with a token that has the `read:packages` scope — GitHub Packages requires auth even for public packages. Add an `.npmrc` (project-local or `~/.npmrc`):
+```bash
+npm install cryptofort
+# plus the driver for your backend:
+npm install @supabase/supabase-js   # or: better-sqlite3 | postgres
+```
+
+<details>
+<summary>Install from GitHub Packages instead</summary>
+
+CryptoFort is also published to GitHub Packages as `@bradley-t-t/cryptofort`. Point the `@bradley-t-t` scope at the GitHub registry and authenticate with a token that has `read:packages` — GitHub Packages requires auth even for public packages:
 
 ```ini
 @bradley-t-t:registry=https://npm.pkg.github.com
 //npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
 ```
 
-Then install:
-
 ```bash
 npm install @bradley-t-t/cryptofort
-# plus the driver for your backend:
-npm install @supabase/supabase-js   # or: better-sqlite3 | postgres
 ```
+
+</details>
 
 ## Library usage
 
 ```ts
-import { Vault, Crypto, SqliteAdapter } from '@bradley-t-t/cryptofort';
+import { Vault, Crypto, SqliteAdapter } from 'cryptofort';
 
 const adapter = new SqliteAdapter('vault.db');
 await adapter.init();
@@ -92,7 +99,7 @@ Generate a master key (base64, 32 bytes):
 node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 ```
 
-…or from the library with `import { generateKey } from '@bradley-t-t/cryptofort'`.
+…or from the library with `import { generateKey } from 'cryptofort'`.
 
 ## MCP server
 
