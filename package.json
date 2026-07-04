@@ -70,5 +70,8 @@
     "tsup": "^8.0.0",
     "typescript": "^5.6.0",
     "vitest": "^2.0.0"
+  },
+  "dependencies": {
+    "zod": "^4.4.3"
   }
 }
