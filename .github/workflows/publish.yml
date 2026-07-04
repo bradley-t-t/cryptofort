@@ -1,0 +1,29 @@
+name: Publish package
+
+# Publishes @bradley-t-t/cryptofort to GitHub Packages when a GitHub Release is
+# published, or on manual dispatch. Uses the automatic GITHUB_TOKEN — no secrets
+# to manage. The package name must stay scoped to the repository owner.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://npm.pkg.github.com
+      - run: npm install
+      - run: npm run build
+      - run: npm test
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
