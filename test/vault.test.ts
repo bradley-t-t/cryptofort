@@ -66,4 +66,47 @@ describe('Vault', () => {
     await vault.remove('k');
     expect(await vault.get('k')).toBeNull();
   });
+
+  it('rejects a secret blob spliced into a different record', async () => {
+    const adapter = new SqliteAdapter(':memory:');
+    await adapter.init();
+    const v = new Vault({ adapter, crypto: new Crypto({ key: generateKey() }) });
+    await v.put({ name: 'low', secret: 'low-value' });
+    await v.put({ name: 'high', secret: 'high-value' });
+    const low = await adapter.findByName('default', 'low');
+    // Move the low-value ciphertext onto the high-value record; the aad binding
+    // must make the swap fail to decrypt rather than leak 'low-value' as 'high'.
+    await adapter.update('default', 'high', {
+      secretCiphertext: low!.secretCiphertext,
+      secretIv: low!.secretIv,
+      secretTag: low!.secretTag,
+      keyId: low!.keyId,
+    });
+    await expect(v.get('high')).rejects.toThrow();
+  });
+
+  it('still reads legacy records sealed without aad', async () => {
+    const adapter = new SqliteAdapter(':memory:');
+    await adapter.init();
+    const crypto = new Crypto({ key: generateKey() });
+    const v = new Vault({ adapter, crypto });
+    const legacy = await crypto.seal('legacy-secret'); // pre-upgrade: no aad
+    await adapter.insert({
+      id: globalThis.crypto.randomUUID(),
+      namespace: 'default',
+      name: 'old',
+      description: null,
+      tags: [],
+      provider: null,
+      metadata: {},
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      lastAccessedAt: null,
+      secretCiphertext: legacy.ciphertext,
+      secretIv: legacy.iv,
+      secretTag: legacy.tag,
+      keyId: legacy.keyId,
+    });
+    expect(await v.get('old')).toBe('legacy-secret');
+  });
 });
