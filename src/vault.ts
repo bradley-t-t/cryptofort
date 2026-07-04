@@ -23,9 +23,16 @@ export class Vault {
     this.crypto = opts.crypto;
   }
 
+  // Bind each sealed secret to its namespace+name so a ciphertext cannot be
+  // moved to another record (or namespace) without failing the GCM tag check.
+  // The NUL separator keeps the pair unambiguous across identifier values.
+  private aad(namespace: string, name: string): string {
+    return `${namespace}\u0000${name}`;
+  }
+
   async put(input: CredentialInput): Promise<void> {
     const namespace = input.namespace ?? DEFAULT_NAMESPACE;
-    const sealed = await this.crypto.seal(input.secret);
+    const sealed = await this.crypto.seal(input.secret, this.aad(namespace, input.name));
     const now = new Date().toISOString();
     const existing = await this.adapter.findByName(namespace, input.name);
     if (existing) {
@@ -66,12 +73,22 @@ export class Vault {
     const namespace = opts.namespace ?? DEFAULT_NAMESPACE;
     const record = await this.adapter.findByName(namespace, name);
     if (!record) return null;
-    const secret = await this.crypto.open({
+    const sealed = {
       ciphertext: record.secretCiphertext,
       iv: record.secretIv,
       tag: record.secretTag,
       keyId: record.keyId,
-    });
+    };
+    let secret: string;
+    try {
+      secret = await this.crypto.open(sealed, this.aad(namespace, name));
+    } catch {
+      // Records written before AAD binding was introduced were sealed without
+      // it; fall back so existing secrets stay readable. They pick up the
+      // binding the next time they are put(). A genuinely tampered or swapped
+      // record fails this second open too, so the error still propagates.
+      secret = await this.crypto.open(sealed);
+    }
     await this.adapter.touchAccessed(namespace, name);
     return secret;
   }

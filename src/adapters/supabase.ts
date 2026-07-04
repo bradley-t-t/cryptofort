@@ -123,7 +123,12 @@ export class SupabaseAdapter implements CredentialStore {
     let q = this.client.from(TABLE).select(META_COLUMNS);
     if (opts.namespace) q = q.eq('namespace', opts.namespace);
     if (query) {
-      const like = `%${query}%`;
+      // PostgREST parses the .or() argument as a filter grammar (commas separate
+      // terms, dots split column.op.value), so an unescaped query can break out
+      // of the ilike term and inject conditions. Wrap the value in double quotes
+      // and escape backslashes and quotes so reserved characters stay literal.
+      const escaped = query.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+      const like = `"%${escaped}%"`;
       q = q.or(`name.ilike.${like},description.ilike.${like},provider.ilike.${like}`);
     }
     if (opts.tags && opts.tags.length) q = q.contains('tags', opts.tags);

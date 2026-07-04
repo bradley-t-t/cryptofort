@@ -130,4 +130,17 @@ describe('SupabaseAdapter', () => {
     expect(hits[0]).not.toHaveProperty('secretCiphertext');
     expect(hits[0].name).toBe('stripe-key');
   });
+
+  it('quotes the search term so it cannot break out of the or() filter', async () => {
+    const client = fakeClient([]);
+    const a = new SupabaseAdapter(client as any);
+    await a.searchMeta('a,b)', { namespace: 'default' });
+    const or = client._calls.flatMap((s: any) => s.filters).find((f: any[]) => f[0] === 'or');
+    expect(or).toBeDefined();
+    const expr = or[1] as string;
+    // The reserved characters ride inside a quoted value; no bare comma/paren
+    // leaks into the filter grammar as an injected term.
+    expect(expr).toContain('name.ilike."%a,b)%"');
+    expect(expr).not.toContain('ilike.%a,b)%');
+  });
 });
