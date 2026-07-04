@@ -1,4 +1,3 @@
-import Database from 'better-sqlite3';
 import type { CredentialStore } from './types.js';
 import type { CredentialMeta, ListOptions, SealedRecord, SearchOptions } from '../types.js';
 
@@ -9,6 +8,10 @@ interface Db {
     get(...args: unknown[]): Record<string, unknown> | undefined;
     all(...args: unknown[]): Record<string, unknown>[];
   };
+}
+
+interface DatabaseCtor {
+  new (path: string): Db;
 }
 
 interface DbRow {
@@ -54,13 +57,21 @@ function toRecord(r: DbRow): SealedRecord {
 }
 
 export class SqliteAdapter implements CredentialStore {
-  private readonly db: Db;
+  private readonly path: string;
+  private db: Db | undefined;
 
   constructor(path = 'cryptofort.db') {
-    this.db = new Database(path) as unknown as Db;
+    this.path = path;
   }
 
   async init(): Promise<void> {
+    // Load the native driver lazily so merely importing cryptofort (e.g. for the
+    // Supabase adapter) does not require better-sqlite3 to be installed.
+    const mod = (await import('better-sqlite3')) as unknown as {
+      default?: DatabaseCtor;
+    } & DatabaseCtor;
+    const Database = (mod.default ?? mod) as DatabaseCtor;
+    this.db = new Database(this.path);
     this.db.exec(`
       create table if not exists cryptofort_credentials (
         id text primary key,
@@ -82,8 +93,13 @@ export class SqliteAdapter implements CredentialStore {
     `);
   }
 
+  private conn(): Db {
+    if (!this.db) throw new Error('cryptofort: SqliteAdapter.init() must be called before use');
+    return this.db;
+  }
+
   async insert(row: SealedRecord): Promise<void> {
-    this.db
+    this.conn()
       .prepare(
         `insert into cryptofort_credentials
          (id, namespace, name, description, tags, provider, metadata,
@@ -138,7 +154,7 @@ export class SqliteAdapter implements CredentialStore {
     }
     if (sets.length === 0) return;
     vals.push(namespace, name);
-    this.db
+    this.conn()
       .prepare(
         `update cryptofort_credentials set ${sets.join(', ')} where namespace = ? and name = ?`,
       )
@@ -146,7 +162,7 @@ export class SqliteAdapter implements CredentialStore {
   }
 
   async findByName(namespace: string, name: string): Promise<SealedRecord | null> {
-    const r = this.db
+    const r = this.conn()
       .prepare(`select * from cryptofort_credentials where namespace = ? and name = ?`)
       .get(namespace, name) as DbRow | undefined;
     return r ? toRecord(r) : null;
@@ -174,7 +190,9 @@ export class SqliteAdapter implements CredentialStore {
     if (where.length) sql += ' where ' + where.join(' and ');
     sql += ' order by name asc';
     if (opts.limit) sql += ` limit ${Number(opts.limit)}`;
-    const rows = this.db.prepare(sql).all(...vals) as unknown as DbRow[];
+    const rows = this.conn()
+      .prepare(sql)
+      .all(...vals) as unknown as DbRow[];
     return rows.map(toMeta);
   }
 
@@ -183,13 +201,13 @@ export class SqliteAdapter implements CredentialStore {
   }
 
   async remove(namespace: string, name: string): Promise<void> {
-    this.db
+    this.conn()
       .prepare(`delete from cryptofort_credentials where namespace = ? and name = ?`)
       .run(namespace, name);
   }
 
   async touchAccessed(namespace: string, name: string): Promise<void> {
-    this.db
+    this.conn()
       .prepare(
         `update cryptofort_credentials set last_accessed_at = ? where namespace = ? and name = ?`,
       )
