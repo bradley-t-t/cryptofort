@@ -1,5 +1,5 @@
 {
-  "name": "cryptofort",
+  "name": "@bradley-t-t/cryptofort",
   "version": "0.1.0",
   "description": "Encrypted-at-rest credential vault with pluggable DB backends and an MCP server for agents.",
   "license": "MIT",
@@ -25,6 +25,9 @@
     "sqlite",
     "postgres"
   ],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
