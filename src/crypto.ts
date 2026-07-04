@@ -61,13 +61,21 @@ export class Crypto {
     ]);
   }
 
-  async seal(plaintext: string): Promise<Sealed> {
+  /**
+   * Seal plaintext. `aad` (additional authenticated data) is bound into the GCM
+   * tag but not stored in the record; the caller must supply the same value to
+   * open. The vault passes the credential's namespace+name so a sealed blob
+   * cannot be moved to a different record without failing the tag check.
+   */
+  async seal(plaintext: string, aad?: string): Promise<Sealed> {
     const iv = new Uint8Array(IV_BYTES);
     globalThis.crypto.getRandomValues(iv);
     const key = await this.importKey(this.keys[this.activeKeyId]);
+    const alg: AesGcmParams = { name: 'AES-GCM', iv: toArrayBuffer(iv), tagLength: TAG_BYTES * 8 };
+    if (aad !== undefined) alg.additionalData = toArrayBuffer(new TextEncoder().encode(aad));
     const out = new Uint8Array(
       await globalThis.crypto.subtle.encrypt(
-        { name: 'AES-GCM', iv: toArrayBuffer(iv), tagLength: TAG_BYTES * 8 },
+        alg,
         key,
         toArrayBuffer(new TextEncoder().encode(plaintext)),
       ),
@@ -83,7 +91,8 @@ export class Crypto {
     };
   }
 
-  async open(sealed: Sealed): Promise<string> {
+  /** Open a sealed record. `aad` must match the value used to seal it. */
+  async open(sealed: Sealed, aad?: string): Promise<string> {
     const raw = this.keys[sealed.keyId];
     if (!raw) throw new Error(`cryptofort: no key available for keyId '${sealed.keyId}'`);
     const key = await this.importKey(raw);
@@ -93,11 +102,9 @@ export class Crypto {
     const combined = new Uint8Array(ct.length + tag.length);
     combined.set(ct, 0);
     combined.set(tag, ct.length);
-    const plain = await globalThis.crypto.subtle.decrypt(
-      { name: 'AES-GCM', iv: toArrayBuffer(iv), tagLength: TAG_BYTES * 8 },
-      key,
-      toArrayBuffer(combined),
-    );
+    const alg: AesGcmParams = { name: 'AES-GCM', iv: toArrayBuffer(iv), tagLength: TAG_BYTES * 8 };
+    if (aad !== undefined) alg.additionalData = toArrayBuffer(new TextEncoder().encode(aad));
+    const plain = await globalThis.crypto.subtle.decrypt(alg, key, toArrayBuffer(combined));
     return new TextDecoder().decode(plain);
   }
 }

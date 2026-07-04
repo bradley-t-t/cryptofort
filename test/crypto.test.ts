@@ -41,4 +41,22 @@ describe('Crypto', () => {
     expect((await c.seal('y')).keyId).toBe('v2');
     expect(await c.open(oldSealed)).toBe('x'); // opened via keys['v1']
   });
+
+  it('round-trips with matching aad', async () => {
+    const c = new Crypto({ key });
+    const sealed = await c.seal('x', 'ns:name');
+    expect(await c.open(sealed, 'ns:name')).toBe('x');
+  });
+
+  it('fails to open when the aad does not match', async () => {
+    const c = new Crypto({ key });
+    const sealed = await c.seal('x', 'ns:name');
+    await expect(c.open(sealed, 'ns:other')).rejects.toThrow();
+  });
+
+  it('fails to open aad-sealed data without supplying the aad', async () => {
+    const c = new Crypto({ key });
+    const sealed = await c.seal('x', 'ns:name');
+    await expect(c.open(sealed)).rejects.toThrow();
+  });
 });
