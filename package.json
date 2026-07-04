@@ -3,6 +3,28 @@
   "version": "0.1.0",
   "description": "Encrypted-at-rest credential vault with pluggable DB backends and an MCP server for agents.",
   "license": "MIT",
+  "homepage": "https://github.com/bradley-t-t/cryptofort#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bradley-t-t/cryptofort.git"
+  },
+  "bugs": {
+    "url": "https://github.com/bradley-t-t/cryptofort/issues"
+  },
+  "keywords": [
+    "credentials",
+    "secrets",
+    "vault",
+    "secrets-manager",
+    "encryption",
+    "aes-256-gcm",
+    "mcp",
+    "model-context-protocol",
+    "agents",
+    "supabase",
+    "sqlite",
+    "postgres"
+  ],
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
