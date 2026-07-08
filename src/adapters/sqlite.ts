@@ -1,5 +1,6 @@
 import type { CredentialStore } from './types.js';
 import type { CredentialMeta, ListOptions, SealedRecord, SearchOptions } from '../types.js';
+import { SQLITE_TABLE_DDL } from './schema.js';
 
 interface Db {
   exec(sql: string): unknown;
@@ -72,25 +73,7 @@ export class SqliteAdapter implements CredentialStore {
     } & DatabaseCtor;
     const Database = (mod.default ?? mod) as DatabaseCtor;
     this.db = new Database(this.path);
-    this.db.exec(`
-      create table if not exists cryptofort_credentials (
-        id text primary key,
-        namespace text not null default 'default',
-        name text not null,
-        description text,
-        tags text not null default '[]',
-        provider text,
-        metadata text not null default '{}',
-        created_at text not null,
-        updated_at text not null,
-        last_accessed_at text,
-        secret_ciphertext text not null,
-        secret_iv text not null,
-        secret_tag text not null,
-        key_id text not null default 'default',
-        unique (namespace, name)
-      );
-    `);
+    this.db.exec(SQLITE_TABLE_DDL);
   }
 
   private conn(): Db {

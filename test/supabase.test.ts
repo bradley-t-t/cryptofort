@@ -144,3 +144,52 @@ describe('SupabaseAdapter', () => {
     expect(expr).not.toContain('ilike.%a,b)%');
   });
 });
+
+// Probe-only client: init() runs `from(TABLE).select('id').limit(1)`, so the
+// limit() call resolves with whatever {data, error} we want to simulate.
+function probeClient(result: { error: unknown }) {
+  return {
+    from: () => ({
+      select: () => ({ limit: () => Promise.resolve({ data: null, ...result }) }),
+    }),
+  } as any;
+}
+
+function fakeProvisioner() {
+  const calls: string[] = [];
+  const sql: any = { unsafe: (s: string) => (calls.push(s), Promise.resolve()) };
+  sql._calls = calls;
+  return sql;
+}
+
+describe('SupabaseAdapter.init', () => {
+  it('is a no-op when the table already exists', async () => {
+    const prov = fakeProvisioner();
+    const a = new SupabaseAdapter(probeClient({ error: null }), { provisioner: prov });
+    await expect(a.init()).resolves.toBeUndefined();
+    expect(prov._calls).toHaveLength(0);
+  });
+
+  it('provisions the schema when the table is missing and a connection is given', async () => {
+    const prov = fakeProvisioner();
+    const err = { code: '42P01', message: 'relation "cryptofort_credentials" does not exist' };
+    const a = new SupabaseAdapter(probeClient({ error: err }), { provisioner: prov });
+    await a.init();
+    expect(prov._calls.some((s) => /create table if not exists/i.test(s))).toBe(true);
+    expect(prov._calls.some((s) => /enable row level security/i.test(s))).toBe(true);
+  });
+
+  it('throws a clear error when the table is missing and no connection is configured', async () => {
+    const err = { code: 'PGRST205', message: 'Could not find the table in the schema cache' };
+    const a = new SupabaseAdapter(probeClient({ error: err }));
+    await expect(a.init()).rejects.toThrow(/CRYPTOFORT_SUPABASE_DB_URL/);
+  });
+
+  it('does not provision or throw on a non-missing error (auth/network)', async () => {
+    const prov = fakeProvisioner();
+    const err = { code: '401', message: 'Invalid API key' };
+    const a = new SupabaseAdapter(probeClient({ error: err }), { provisioner: prov });
+    await expect(a.init()).resolves.toBeUndefined();
+    expect(prov._calls).toHaveLength(0);
+  });
+});
