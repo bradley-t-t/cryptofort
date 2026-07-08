@@ -1,8 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { CredentialStore } from './types.js';
+import type { Sql } from './postgres.js';
 import type { CredentialMeta, ListOptions, SealedRecord, SearchOptions } from '../types.js';
-
-const TABLE = 'cryptofort_credentials';
+import { POSTGRES_INDEX_DDL, POSTGRES_RLS_DDL, POSTGRES_TABLE_DDL, TABLE } from './schema.js';
 
 interface DbRow {
   id: string;
@@ -88,11 +88,57 @@ function patchToDb(patch: Partial<SealedRecord>): Record<string, unknown> {
   return out;
 }
 
-export class SupabaseAdapter implements CredentialStore {
-  constructor(private readonly client: SupabaseClient) {}
+/** Postgres/PostgREST "relation does not exist" signals for a missing table. */
+function isUndefinedTable(err: { code?: string; message?: string }): boolean {
+  const code = err.code ?? '';
+  const msg = err.message ?? '';
+  // 42P01 is the Postgres undefined_table SQLSTATE; PGRST205 is PostgREST's
+  // "Could not find the table ... in the schema cache".
+  return code === '42P01' || code === 'PGRST205' || /does not exist|find the table/i.test(msg);
+}
 
-  // Schema is provisioned via migration; init is a no-op for Supabase.
-  async init(): Promise<void> {}
+export interface SupabaseAdapterOptions {
+  // A direct Postgres connection used only to create the schema when it is
+  // missing (PostgREST cannot run DDL). Reads and writes still go through the
+  // Supabase client. Wire it from CRYPTOFORT_SUPABASE_DB_URL — see config.
+  provisioner?: Sql;
+}
+
+export class SupabaseAdapter implements CredentialStore {
+  private readonly provisioner?: Sql;
+
+  constructor(
+    private readonly client: SupabaseClient,
+    opts: SupabaseAdapterOptions = {},
+  ) {
+    this.provisioner = opts.provisioner;
+  }
+
+  // Build the table on first connect if it does not exist. The Supabase client
+  // speaks PostgREST, which cannot run DDL, so provisioning needs a direct
+  // Postgres connection. When the table already exists this is a cheap probe
+  // and a no-op, so it is safe to call on every startup.
+  async init(): Promise<void> {
+    const { error } = await this.client.from(TABLE).select('id').limit(1);
+    if (!error) return;
+    if (!isUndefinedTable(error)) {
+      // Auth/network/other error — not a missing table. Don't provision over a
+      // real problem, and don't take down a previously-working server: warn and
+      // let the actual operations surface the issue.
+      console.error(`cryptofort: could not verify Supabase schema: ${error.message}`);
+      return;
+    }
+    if (!this.provisioner) {
+      throw new Error(
+        `cryptofort: table "${TABLE}" does not exist and no provisioning connection is configured. ` +
+          `Set CRYPTOFORT_SUPABASE_DB_URL to a direct Postgres connection string so CryptoFort can ` +
+          `create the schema automatically.`,
+      );
+    }
+    await this.provisioner.unsafe(POSTGRES_TABLE_DDL);
+    for (const ddl of POSTGRES_INDEX_DDL) await this.provisioner.unsafe(ddl);
+    await this.provisioner.unsafe(POSTGRES_RLS_DDL);
+  }
 
   async insert(row: SealedRecord): Promise<void> {
     const { error } = await this.client.from(TABLE).insert(toDbInsert(row));

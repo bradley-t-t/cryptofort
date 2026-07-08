@@ -1,6 +1,6 @@
 {
   "name": "cryptofort",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Encrypted-at-rest credential vault with pluggable DB backends and an MCP server for agents.",
   "license": "MIT",
   "homepage": "https://github.com/bradley-t-t/cryptofort#readme",
@@ -50,7 +50,6 @@
   },
   "files": [
     "dist",
-    "sql",
     "README.md"
   ],
   "scripts": {

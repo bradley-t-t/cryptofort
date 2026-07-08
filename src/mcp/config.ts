@@ -33,7 +33,21 @@ export async function adapterFromEnv(): Promise<CredentialStore> {
     if (!url || !serviceKey) {
       throw new Error('cryptofort: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required');
     }
-    return new SupabaseAdapter(createClient(url, serviceKey));
+    // PostgREST cannot run DDL, so auto-provisioning the schema needs a direct
+    // Postgres connection. Optional: without it, init() is a no-op when the
+    // table already exists and a clear error if it is missing.
+    let provisioner: Sql | undefined;
+    const dbUrl = process.env.CRYPTOFORT_SUPABASE_DB_URL;
+    if (dbUrl) {
+      const { default: postgres } = await import('postgres');
+      provisioner = postgres(dbUrl) as unknown as Sql;
+    }
+    const adapter = new SupabaseAdapter(createClient(url, serviceKey), { provisioner });
+    await adapter.init();
+    // The provisioning connection is only needed for the one-time DDL; close it
+    // so the long-running server does not hold an idle Postgres pool open.
+    if (provisioner) await (provisioner as unknown as { end?: () => Promise<void> }).end?.();
+    return adapter;
   }
   throw new Error(`cryptofort: unknown CRYPTOFORT_ADAPTER '${kind}'`);
 }

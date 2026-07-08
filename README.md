@@ -140,6 +140,7 @@ The server is **read-only** by default. Add `"args": ["--allow-write"]` to expos
 | `CRYPTOFORT_ADAPTER`                         | —        | `supabase` (default), `sqlite`, or `postgres`.              |
 | `CRYPTOFORT_KEY_ID`                          | —        | Key identifier for rotation. Defaults to `default`.         |
 | `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` | Supabase | Connection for the Supabase adapter.                        |
+| `CRYPTOFORT_SUPABASE_DB_URL`                 | —        | Direct Postgres URL, used only to auto-create the schema.   |
 | `CRYPTOFORT_POSTGRES_URL`                    | Postgres | Connection string for the Postgres adapter.                 |
 | `CRYPTOFORT_SQLITE_PATH`                     | —        | SQLite file path. Defaults to `cryptofort.db`.              |
 
@@ -160,7 +161,12 @@ The server is **read-only** by default. Add `"args": ["--allow-write"]` to expos
 
 ## Schema
 
-See [`sql/001_cryptofort_credentials.sql`](sql/001_cryptofort_credentials.sql) — one table, one ciphertext column, the rest plaintext metadata for search.
+CryptoFort creates its schema automatically on first connect — one table, one ciphertext column, the rest plaintext metadata for search. There is no migration to run by hand.
+
+- **SQLite** and **Postgres**: `adapter.init()` issues `create table if not exists` (plus indexes), so pointing CryptoFort at an empty database is enough.
+- **Supabase**: the client speaks PostgREST, which cannot run DDL. `init()` probes for the table and, when it is missing, creates it through a direct Postgres connection given in `CRYPTOFORT_SUPABASE_DB_URL`. If the table already exists the probe is a no-op; if it is missing and no DB URL is set, `init()` fails with a clear message instead of silently.
+
+The canonical column definitions live in [`src/adapters/schema.ts`](src/adapters/schema.ts).
 
 ## Development
 

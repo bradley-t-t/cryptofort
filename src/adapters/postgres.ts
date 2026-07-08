@@ -1,5 +1,6 @@
 import type { CredentialStore } from './types.js';
 import type { CredentialMeta, ListOptions, SealedRecord, SearchOptions } from '../types.js';
+import { POSTGRES_INDEX_DDL, POSTGRES_TABLE_DDL } from './schema.js';
 
 /**
  * Structural subset of porsager `postgres`. Two call forms:
@@ -58,24 +59,8 @@ export class PostgresAdapter implements CredentialStore {
   constructor(private readonly sql: Sql) {}
 
   async init(): Promise<void> {
-    await this.sql`
-      create table if not exists cryptofort_credentials (
-        id uuid primary key,
-        namespace text not null default 'default',
-        name text not null,
-        description text,
-        tags text[] not null default '{}',
-        provider text,
-        metadata jsonb not null default '{}',
-        created_at timestamptz not null default now(),
-        updated_at timestamptz not null default now(),
-        last_accessed_at timestamptz,
-        secret_ciphertext text not null,
-        secret_iv text not null,
-        secret_tag text not null,
-        key_id text not null default 'default',
-        unique (namespace, name)
-      )`;
+    await this.sql.unsafe(POSTGRES_TABLE_DDL);
+    for (const ddl of POSTGRES_INDEX_DDL) await this.sql.unsafe(ddl);
   }
 
   async insert(row: SealedRecord): Promise<void> {
