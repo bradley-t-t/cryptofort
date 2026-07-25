@@ -1,7 +1,6 @@
-// Canonical CryptoFort schema, expressed in code so no `.sql` file ships with
-// the package. Each adapter builds its store from these definitions on first
-// connect (see the `init()` implementations), so a fresh database is created
-// automatically instead of requiring the user to run a migration by hand.
+// Schema lives in code rather than a `.sql` file so the package can provision
+// itself: each adapter's init() applies these on first connect and a fresh
+// database just works, with no migration step for the user to run.
 
 export const TABLE = 'cryptofort_credentials';
 
@@ -36,8 +35,8 @@ export const POSTGRES_INDEX_DDL = [
 // secrets are ciphertext at rest. Harmless on a table the service role owns.
 export const POSTGRES_RLS_DDL = `alter table ${TABLE} enable row level security`;
 
-// SQLite mirrors the Postgres columns with SQLite-native types (text ids,
-// JSON-encoded tags/metadata).
+// Same columns as Postgres, but SQLite has no uuid or array type — ids are text
+// and tags/metadata are JSON-encoded strings.
 export const SQLITE_TABLE_DDL = `
   create table if not exists ${TABLE} (
     id text primary key,
