@@ -13,12 +13,12 @@
 </p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/cryptofort"><img src="https://img.shields.io/npm/v/cryptofort?style=for-the-badge&color=2563eb&logo=npm&logoColor=white" alt="npm" /></a>
-  <a href="https://github.com/bradley-t-t/cryptofort/pkgs/npm/cryptofort"><img src="https://img.shields.io/badge/GitHub%20Packages-@bradley--t--t-2563eb?style=for-the-badge&logo=github&logoColor=white" alt="GitHub Packages" /></a>
-  <img src="https://img.shields.io/badge/license-MIT-2563eb?style=for-the-badge" alt="License" />
-  <img src="https://img.shields.io/badge/node-%3E%3D20-2563eb?style=for-the-badge" alt="Node >=20" />
-  <img src="https://img.shields.io/badge/AES--256--GCM-encrypted-1f56cf?style=for-the-badge" alt="AES-256-GCM" />
-  <img src="https://img.shields.io/badge/MCP-ready-3b82f6?style=for-the-badge" alt="MCP ready" />
+  <a href="https://www.npmjs.com/package/cryptofort"><img src="https://img.shields.io/npm/v/cryptofort?style=for-the-badge&color=1f54c9&logo=npm&logoColor=white" alt="npm" /></a>
+  <a href="https://github.com/bradley-t-t/cryptofort/pkgs/npm/cryptofort"><img src="https://img.shields.io/badge/GitHub%20Packages-@bradley--t--t-1f54c9?style=for-the-badge&logo=github&logoColor=white" alt="GitHub Packages" /></a>
+  <img src="https://img.shields.io/badge/license-MIT-1f54c9?style=for-the-badge" alt="License" />
+  <img src="https://img.shields.io/badge/node-%3E%3D20-1f54c9?style=for-the-badge" alt="Node >=20" />
+  <img src="https://img.shields.io/badge/AES--256--GCM-encrypted-142e74?style=for-the-badge" alt="AES-256-GCM" />
+  <img src="https://img.shields.io/badge/MCP-ready-1f54c9?style=for-the-badge" alt="MCP ready" />
 </p>
 
 <br />
@@ -152,6 +152,21 @@ The server is **read-only** by default. Add `"args": ["--allow-write"]` to expos
 | **Postgres** | `postgres`              | Dropping the vault into existing Postgres infrastructure. |
 | **SQLite**   | `better-sqlite3`        | Local, single-process, zero-infrastructure use.           |
 
+## Architecture
+
+```mermaid
+flowchart TD
+    A["Agent / MCP client"] -->|"stdio"| M["cryptofort-mcp — read-only by default"]
+    App["Your app"] --> V["Vault"]
+    M --> V
+    V --> C["Crypto — AES-256-GCM"]
+    C -->|"master key from env, never stored"| K["CRYPTOFORT_MASTER_KEY"]
+    V --> AD["Adapter"]
+    AD --> S[("Supabase")]
+    AD --> P[("Postgres")]
+    AD --> Q[("SQLite")]
+```
+
 ## How it works
 
 - Only the secret is ciphertext. `name`, `description`, `provider`, and `tags` stay plaintext, so search and listing work without ever decrypting.
@@ -171,10 +186,20 @@ The canonical column definitions live in [`src/adapters/schema.ts`](src/adapters
 ## Development
 
 ```bash
+npm install
 npm run build      # bundle with tsup
 npm test           # run the vitest suite
-npm run typecheck  # tsc --noEmit
 ```
+
+| Script | Does |
+| :--- | :--- |
+| `npm run build` | Bundle ESM, CJS, and types with tsup. |
+| `npm test` | Run the Vitest suite. |
+| `npm run typecheck` | `tsc --noEmit`. |
+| `npm run lint` | Lint with ESLint. |
+| `npm run format` | Check formatting with Prettier. |
+
+Backend drivers are optional peer dependencies — install only the one you use.
 
 ## License
 
