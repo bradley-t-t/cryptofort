@@ -7,3 +7,14 @@ dist
 .vscode/
 *.iml
 *.sql
+
+# Secrets and local tooling state — never commit
+.env.*
+!.env.example
+.claude/
+.fleet/
+*.pem
+*.p12
+*.pfx
+id_rsa
+id_ed25519
