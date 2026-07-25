@@ -20,10 +20,8 @@ export interface CredentialMeta {
   lastAccessedAt: string | null;
 }
 
-/** A full persisted row: metadata + sealed secret. */
 export interface SealedRecord extends CredentialMeta, SealedSecret {}
 
-/** Caller input for creating/updating a credential. */
 export interface CredentialInput {
   name: string;
   secret: string;

@@ -88,7 +88,6 @@ function patchToDb(patch: Partial<SealedRecord>): Record<string, unknown> {
   return out;
 }
 
-/** Postgres/PostgREST "relation does not exist" signals for a missing table. */
 function isUndefinedTable(err: { code?: string; message?: string }): boolean {
   const code = err.code ?? '';
   const msg = err.message ?? '';

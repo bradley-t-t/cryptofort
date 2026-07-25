@@ -17,7 +17,6 @@ export interface CryptoOptions {
 const IV_BYTES = 12;
 const TAG_BYTES = 16;
 
-/** Generate a fresh base64 32-byte key. */
 export function generateKey(): string {
   const raw = new Uint8Array(32);
   globalThis.crypto.getRandomValues(raw);

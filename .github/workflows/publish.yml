@@ -1,8 +1,8 @@
 name: Publish package
 
-# On a published GitHub Release (or manual dispatch), publish to BOTH registries:
-#   - npm as the canonical unscoped `cryptofort` (needs an NPM_TOKEN repo secret)
-#   - GitHub Packages as `@bradley-t-t/cryptofort` (scope required; uses GITHUB_TOKEN)
+# Both registries get every release. npm carries the canonical unscoped name and
+# needs an NPM_TOKEN repo secret; GitHub Packages only accepts owner-scoped names
+# and authenticates with the built-in GITHUB_TOKEN.
 on:
   release:
     types: [published]
