@@ -46,13 +46,30 @@ Secrets sprawl across `.env` files, shell history, and plaintext columns — and
 
 <br />
 
+## Stack
+
+| Layer | Technology |
+| :--- | :--- |
+| Language | TypeScript 5, ESM-first with a CJS build |
+| Encryption | Node `crypto` — AES-256-GCM, 32-byte key from the environment |
+| Validation | Zod 4 (MCP tool schemas) |
+| Agent interface | `@modelcontextprotocol/sdk` over stdio, read-only by default |
+| Backends | `@supabase/supabase-js`, `postgres`, or `better-sqlite3` — all optional peers |
+| Build | tsup (ESM + CJS + `.d.ts`) |
+| Tests | Vitest |
+| Runtime | Node 20 or newer |
+
 ## Install
 
 ```bash
 npm install cryptofort
 # plus the driver for your backend:
 npm install @supabase/supabase-js   # or: better-sqlite3 | postgres
+# and, to run the MCP server:
+npm install @modelcontextprotocol/sdk
 ```
+
+Every driver — and the MCP SDK — is an **optional peer dependency**, so nothing is pulled in that you do not use. Requires Node 20 or newer.
 
 <details>
 <summary>Install from GitHub Packages instead</summary>
@@ -103,7 +120,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 
 ## MCP server
 
-Point any MCP client at the `cryptofort-mcp` binary:
+The MCP server needs `@modelcontextprotocol/sdk` installed alongside CryptoFort. Point any MCP client at the `cryptofort-mcp` binary:
 
 ```json
 {
@@ -140,7 +157,7 @@ The server is **read-only** by default. Add `"args": ["--allow-write"]` to expos
 | `CRYPTOFORT_ADAPTER`                         | —        | `supabase` (default), `sqlite`, or `postgres`.              |
 | `CRYPTOFORT_KEY_ID`                          | —        | Key identifier for rotation. Defaults to `default`.         |
 | `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` | Supabase | Connection for the Supabase adapter.                        |
-| `CRYPTOFORT_SUPABASE_DB_URL`                 | —        | Direct Postgres URL, used only to auto-create the schema.   |
+| `CRYPTOFORT_SUPABASE_DB_URL`                 | —        | Direct Postgres URL, used only to auto-create the schema. Needs the `postgres` driver. |
 | `CRYPTOFORT_POSTGRES_URL`                    | Postgres | Connection string for the Postgres adapter.                 |
 | `CRYPTOFORT_SQLITE_PATH`                     | —        | SQLite file path. Defaults to `cryptofort.db`.              |
 
@@ -182,6 +199,30 @@ CryptoFort creates its schema automatically on first connect — one table, one 
 - **Supabase**: the client speaks PostgREST, which cannot run DDL. `init()` probes for the table and, when it is missing, creates it through a direct Postgres connection given in `CRYPTOFORT_SUPABASE_DB_URL`. If the table already exists the probe is a no-op; if it is missing and no DB URL is set, `init()` fails with a clear message instead of silently.
 
 The canonical column definitions live in [`src/adapters/schema.ts`](src/adapters/schema.ts).
+
+## Project structure
+
+```
+cryptofort/
+├── assets/cryptofort-hero.png
+├── src/
+│   ├── index.ts               Public surface — Vault, Crypto, the three adapters, types
+│   ├── vault.ts               put / get / search / list over an adapter
+│   ├── crypto.ts              AES-256-GCM seal/open, generateKey
+│   ├── types.ts               Credential and search types, DEFAULT_NAMESPACE
+│   ├── adapters/
+│   │   ├── types.ts           The CredentialStore contract
+│   │   ├── schema.ts          Canonical column definitions
+│   │   ├── supabase.ts        PostgREST, with optional direct-Postgres provisioning
+│   │   ├── postgres.ts        `postgres` driver
+│   │   └── sqlite.ts          better-sqlite3
+│   └── mcp/
+│       ├── bin.ts             The `cryptofort-mcp` executable, --allow-write
+│       ├── server.ts          Tool definitions, exported as `cryptofort/mcp`
+│       └── config.ts          Crypto and adapter construction from the environment
+├── test/                      crypto, vault, mcp, and one suite per adapter
+└── tsup.config.ts
+```
 
 ## Development
 
