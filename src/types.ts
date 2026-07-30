@@ -1,4 +1,4 @@
-/** The encrypted secret payload, all values base64. */
+/** The encrypted secret payload. Ciphertext, IV and tag are base64; keyId names the key that sealed it. */
 export interface SealedSecret {
   secretCiphertext: string;
   secretIv: string;
