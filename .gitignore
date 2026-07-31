@@ -4,6 +4,7 @@ dist
 .env
 .DS_Store
 Thumbs.db
+desktop.ini
 .idea/
 .vscode/
 *.iml
@@ -15,6 +16,7 @@ Thumbs.db
 .claude/
 CLAUDE.md
 .fleet/
+.junie/
 *.pem
 *.p12
 *.pfx
