@@ -59,7 +59,9 @@ Secrets sprawl across `.env` files, shell history, and plaintext columns — and
 | Tests | Vitest |
 | Runtime | Node 20 or newer |
 
-## Install
+## Getting started
+
+### Install
 
 ```bash
 npm install cryptofort
