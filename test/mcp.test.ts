@@ -26,9 +26,23 @@ describe('mcp buildTools', () => {
     ]);
   });
 
-  it('adds credential_put when write is allowed', () => {
+  it('adds the write tools when write is allowed', () => {
     const tools = buildTools(vault, true);
     expect(Object.keys(tools)).toContain('credential_put');
+    expect(Object.keys(tools)).toContain('credential_delete');
+  });
+
+  it('credential_delete removes the credential', async () => {
+    const tools = buildTools(vault, true);
+    const res = await tools.credential_delete.handler({ name: 'stripe-key' });
+    expect(res.content[0].text).toContain('deleted');
+    expect(await vault.get('stripe-key')).toBeNull();
+  });
+
+  it('credential_delete reports a name that was never stored', async () => {
+    const tools = buildTools(vault, true);
+    const res = await tools.credential_delete.handler({ name: 'nope' });
+    expect(res.content[0].text.toLowerCase()).toContain('not found');
   });
 
   it('credential_search returns metadata without secrets', async () => {
