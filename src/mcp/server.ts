@@ -88,6 +88,22 @@ export function buildTools(vault: Vault, allowWrite: boolean): Record<string, To
         return text(`stored: ${a.name as string}`);
       },
     };
+
+    tools.credential_delete = {
+      description:
+        'Permanently delete a credential by exact name. The secret is gone — there is no undo and no copy kept. Requires the server to run with --allow-write.',
+      schema: {
+        name: z.string().describe('Exact credential name'),
+        namespace: z.string().optional(),
+      },
+      handler: async (a) => {
+        const name = a.name as string;
+        const deleted = await vault.remove(name, {
+          namespace: a.namespace as string | undefined,
+        });
+        return text(deleted ? `deleted: ${name}` : `not found: ${name}`);
+      },
+    };
   }
 
   return tools;
