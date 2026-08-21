@@ -102,7 +102,7 @@ describe('Vault', () => {
     await adapter.init();
     const crypto = new Crypto({ key: generateKey() });
     const v = new Vault({ adapter, crypto });
-    const legacy = await crypto.seal('legacy-secret'); // pre-upgrade: no aad
+    const legacy = await crypto.seal('legacy-secret');
     await adapter.insert({
       id: globalThis.crypto.randomUUID(),
       namespace: 'default',

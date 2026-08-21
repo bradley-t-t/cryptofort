@@ -36,7 +36,7 @@ export function buildTools(vault: Vault, allowWrite: boolean): Record<string, To
     },
     credential_get: {
       description:
-        'Retrieve and decrypt a single credential secret by exact name. Do not print the value into logs or shared output unless the user asked for it.',
+        'Retrieve and decrypt a single credential secret by exact name. Use the value in the operation that needs it; never print it into logs, files, or any shared output.',
       schema: {
         name: z.string().describe('Exact credential name'),
         namespace: z.string().optional(),

@@ -174,8 +174,8 @@ describe('SupabaseAdapter', () => {
   });
 });
 
-// Probe-only client: init() runs `from(TABLE).select('id').limit(1)`, so the
-// limit() call resolves with whatever {data, error} we want to simulate.
+// Probe-only client: init() runs `from(TABLE).select('id, expires_at').limit(1)`,
+// so the limit() call resolves with whatever {data, error} we want to simulate.
 function probeClient(result: { error: unknown }) {
   return {
     from: () => ({
