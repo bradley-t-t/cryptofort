@@ -10,5 +10,7 @@ export interface CredentialStore {
   searchMeta(query: string, opts: SearchOptions): Promise<CredentialMeta[]>;
   listMeta(opts: ListOptions): Promise<CredentialMeta[]>;
   remove(namespace: string, name: string): Promise<void>;
+  /** Delete every record whose expires_at is at or before `now` (ISO). Returns how many were deleted. */
+  removeExpired(now: string): Promise<number>;
   touchAccessed(namespace: string, name: string): Promise<void>;
 }

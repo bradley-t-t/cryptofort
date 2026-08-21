@@ -18,6 +18,8 @@ export interface CredentialMeta {
   createdAt: string;
   updatedAt: string;
   lastAccessedAt: string | null;
+  /** When set, the credential is deleted once this instant passes. */
+  expiresAt: string | null;
 }
 
 export interface SealedRecord extends CredentialMeta, SealedSecret {}
@@ -30,6 +32,8 @@ export interface CredentialInput {
   provider?: string;
   namespace?: string;
   metadata?: Record<string, unknown>;
+  /** ISO 8601 timestamp after which the credential is deleted; null clears an existing expiry. */
+  expiresAt?: string | null;
 }
 
 export interface SearchOptions {

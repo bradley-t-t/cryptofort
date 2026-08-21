@@ -30,6 +30,7 @@ describe('mcp buildTools', () => {
     const tools = buildTools(vault, true);
     expect(Object.keys(tools)).toContain('credential_put');
     expect(Object.keys(tools)).toContain('credential_delete');
+    expect(Object.keys(tools)).toContain('credential_purge_expired');
   });
 
   it('credential_delete removes the credential', async () => {
@@ -63,5 +64,24 @@ describe('mcp buildTools', () => {
     const tools = buildTools(vault, false);
     const res = await tools.credential_get.handler({ name: 'nope' });
     expect(res.content[0].text.toLowerCase()).toContain('not found');
+  });
+
+  it('credential_put stores an expiry and credential_get honors it', async () => {
+    const tools = buildTools(vault, true);
+    const past = new Date(Date.now() - 60_000).toISOString();
+    await tools.credential_put.handler({ name: 'temp', secret: 's3cret', expiresAt: past });
+    const res = await tools.credential_get.handler({ name: 'temp' });
+    expect(res.content[0].text.toLowerCase()).toContain('not found');
+  });
+
+  it('credential_purge_expired deletes entries whose time has come up', async () => {
+    const tools = buildTools(vault, true);
+    const past = new Date(Date.now() - 60_000).toISOString();
+    const future = new Date(Date.now() + 60_000).toISOString();
+    await tools.credential_put.handler({ name: 'dead', secret: 'a', expiresAt: past });
+    await tools.credential_put.handler({ name: 'live', secret: 'b', expiresAt: future });
+    const res = await tools.credential_purge_expired.handler({});
+    expect(res.content[0].text).toBe('purged: 1 expired credential');
+    expect(await vault.get('live')).toBe('b');
   });
 });

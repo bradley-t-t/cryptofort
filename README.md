@@ -112,6 +112,20 @@ await vault.search('stripe'); // metadata only — never the secret
 await vault.get('stripe-secret-key'); // the decrypted secret
 ```
 
+Credentials can be given an expiry, after which they are deleted automatically:
+
+```ts
+await vault.put({
+  name: 'ci-deploy-token',
+  secret: 'ghp_…',
+  expiresAt: '2026-09-01T00:00:00Z', // ISO 8601; pass null later to clear it
+});
+
+await vault.purgeExpired(); // delete every entry whose time has come up
+```
+
+Once `expiresAt` passes, the credential is dead everywhere at once: `get` deletes it and returns `null`, and `search`/`list` no longer show it — even before a purge sweep has physically removed the row. `purgeExpired()` does the physical cleanup; call it on whatever schedule suits your app (the MCP server runs it for you, at startup and hourly).
+
 Generate a master key (base64, 32 bytes):
 
 ```bash
@@ -149,8 +163,11 @@ The server is **read-only** by default. Add `"args": ["--allow-write"]` to expos
 | `credential_search` | read   | Search by name, description, provider, or tag. Returns metadata only. |
 | `credential_get`    | read   | Decrypt and return a single secret by exact name.                     |
 | `credential_list`   | read   | List credential metadata in a namespace, optionally filtered by tag.  |
-| `credential_put`    | write  | Create or update a credential. Requires `--allow-write`.              |
+| `credential_put`    | write  | Create or update a credential, optionally with an `expiresAt` expiry. Requires `--allow-write`. |
 | `credential_delete` | write  | Permanently delete a credential by exact name. Requires `--allow-write`. |
+| `credential_purge_expired` | write | Delete every credential whose expiry has passed. Requires `--allow-write`. |
+
+Expired credentials are also purged automatically: the server sweeps them at startup and every hour after that, and an expired entry is unreadable through `credential_get`/`credential_search` the moment its time passes.
 
 ### Environment
 
@@ -193,6 +210,7 @@ flowchart TD
 - Each secret is sealed with **AES-256-GCM** — authenticated encryption, so any tampering is caught on read.
 - The **master key never touches the database.** It lives only in `CRYPTOFORT_MASTER_KEY`; a stolen dump reveals nothing without it.
 - The MCP server refuses writes unless started with `--allow-write`, so an agent can look secrets up but cannot quietly rewrite or delete anything in the vault.
+- Credentials with an `expiresAt` die on schedule: reads treat an expired entry as gone immediately, and purge sweeps (hourly in the MCP server, or `vault.purgeExpired()` in your own code) delete the rows themselves.
 
 ## Schema
 
