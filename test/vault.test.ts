@@ -63,8 +63,20 @@ describe('Vault', () => {
 
   it('remove deletes the credential', async () => {
     await vault.put({ name: 'k', secret: 'v' });
+    expect(await vault.remove('k')).toBe(true);
+    expect(await vault.get('k')).toBeNull();
+  });
+
+  it('remove reports a name that was never stored', async () => {
+    expect(await vault.remove('absent')).toBe(false);
+  });
+
+  it('remove leaves the same name in another namespace alone', async () => {
+    await vault.put({ name: 'k', secret: 'mine' });
+    await vault.put({ name: 'k', secret: 'theirs', namespace: 'other' });
     await vault.remove('k');
     expect(await vault.get('k')).toBeNull();
+    expect(await vault.get('k', { namespace: 'other' })).toBe('theirs');
   });
 
   it('rejects a secret blob spliced into a different record', async () => {

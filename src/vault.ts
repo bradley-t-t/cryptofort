@@ -101,7 +101,16 @@ export class Vault {
     return this.adapter.listMeta(opts);
   }
 
-  async remove(name: string, opts: { namespace?: string } = {}): Promise<void> {
-    await this.adapter.remove(opts.namespace ?? DEFAULT_NAMESPACE, name);
+  // Answers whether a record was actually there, because deleting is the one
+  // operation with nothing to check afterwards: a mistyped name removes nothing
+  // and looks exactly like a removal that worked.
+  async remove(name: string, opts: { namespace?: string } = {}): Promise<boolean> {
+    const namespace = opts.namespace ?? DEFAULT_NAMESPACE;
+    const existing = await this.adapter.findByName(namespace, name);
+    if (!existing) {
+      return false;
+    }
+    await this.adapter.remove(namespace, name);
+    return true;
   }
 }

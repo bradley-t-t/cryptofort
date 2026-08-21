@@ -140,7 +140,7 @@ The MCP server needs `@modelcontextprotocol/sdk` installed alongside CryptoFort.
 }
 ```
 
-The server is **read-only** by default. Add `"args": ["--allow-write"]` to expose `credential_put`.
+The server is **read-only** by default. Add `"args": ["--allow-write"]` to expose `credential_put` and `credential_delete`.
 
 ### Tools
 
@@ -150,6 +150,7 @@ The server is **read-only** by default. Add `"args": ["--allow-write"]` to expos
 | `credential_get`    | read   | Decrypt and return a single secret by exact name.                     |
 | `credential_list`   | read   | List credential metadata in a namespace, optionally filtered by tag.  |
 | `credential_put`    | write  | Create or update a credential. Requires `--allow-write`.              |
+| `credential_delete` | write  | Permanently delete a credential by exact name. Requires `--allow-write`. |
 
 ### Environment
 
@@ -191,7 +192,7 @@ flowchart TD
 - Only the secret is ciphertext. `name`, `description`, `provider`, and `tags` stay plaintext, so search and listing work without ever decrypting.
 - Each secret is sealed with **AES-256-GCM** — authenticated encryption, so any tampering is caught on read.
 - The **master key never touches the database.** It lives only in `CRYPTOFORT_MASTER_KEY`; a stolen dump reveals nothing without it.
-- The MCP server refuses writes unless started with `--allow-write`, so an agent can look secrets up but cannot quietly rewrite the vault.
+- The MCP server refuses writes unless started with `--allow-write`, so an agent can look secrets up but cannot quietly rewrite or delete anything in the vault.
 
 ## Schema
 
