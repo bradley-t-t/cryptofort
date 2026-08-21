@@ -16,6 +16,14 @@ interface ToolDef {
 
 const text = (s: string): ToolResult => ({ content: [{ type: 'text', text: s }] });
 
+/**
+ * The tools this server exposes, given what the vault is allowed to do.
+ *
+ * `allowWrite` is enforced by omission rather than by a check inside a handler:
+ * a read-only server never registers `credential_put`, `credential_delete`, or
+ * `credential_purge_expired`, so a caller cannot reach them at all and does not
+ * have to be trusted to respect a refusal.
+ */
 export function buildTools(vault: Vault, allowWrite: boolean): Record<string, ToolDef> {
   const tools: Record<string, ToolDef> = {
     credential_search: {

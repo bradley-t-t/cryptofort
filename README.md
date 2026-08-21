@@ -228,7 +228,7 @@ cryptofort/
 ├── assets/cryptofort-hero.png
 ├── src/
 │   ├── index.ts               Public surface — Vault, Crypto, the three adapters, types
-│   ├── vault.ts               put / get / search / list over an adapter
+│   ├── vault.ts               put / get / search / list / remove / purgeExpired over an adapter
 │   ├── crypto.ts              AES-256-GCM seal/open, generateKey
 │   ├── types.ts               Credential and search types, DEFAULT_NAMESPACE
 │   ├── adapters/
