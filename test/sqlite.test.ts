@@ -14,6 +14,7 @@ function row(over: Partial<SealedRecord> = {}): SealedRecord {
     createdAt: over.createdAt ?? '2026-07-04T00:00:00.000Z',
     updatedAt: over.updatedAt ?? '2026-07-04T00:00:00.000Z',
     lastAccessedAt: over.lastAccessedAt ?? null,
+    expiresAt: over.expiresAt ?? null,
     secretCiphertext: over.secretCiphertext ?? 'ct',
     secretIv: over.secretIv ?? 'iv',
     secretTag: over.secretTag ?? 'tag',
@@ -91,5 +92,59 @@ describe('SqliteAdapter', () => {
     await a.touchAccessed('default', 'stripe-key');
     const found = await a.findByName('default', 'stripe-key');
     expect(found?.lastAccessedAt).not.toBeNull();
+  });
+
+  it('round-trips expiresAt', async () => {
+    await a.insert(row({ expiresAt: '2026-07-05T00:00:00.000Z' }));
+    const found = await a.findByName('default', 'stripe-key');
+    expect(found?.expiresAt).toBe('2026-07-05T00:00:00.000Z');
+  });
+
+  it('removeExpired deletes rows at or before the cutoff and reports the count', async () => {
+    await a.insert(row({ id: 'a', name: 'gone', expiresAt: '2026-07-01T00:00:00.000Z' }));
+    await a.insert(row({ id: 'b', name: 'edge', expiresAt: '2026-07-04T00:00:00.000Z' }));
+    await a.insert(row({ id: 'c', name: 'later', expiresAt: '2026-07-09T00:00:00.000Z' }));
+    await a.insert(row({ id: 'd', name: 'forever' }));
+    expect(await a.removeExpired('2026-07-04T00:00:00.000Z')).toBe(2);
+    expect(await a.findByName('default', 'gone')).toBeNull();
+    expect(await a.findByName('default', 'edge')).toBeNull();
+    expect(await a.findByName('default', 'later')).not.toBeNull();
+    expect(await a.findByName('default', 'forever')).not.toBeNull();
+  });
+});
+
+describe('SqliteAdapter migration', () => {
+  it('init adds expires_at to a database created before expiry existed', async () => {
+    const { mkdtempSync } = await import('node:fs');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    const { default: Database } = await import('better-sqlite3');
+    const path = join(mkdtempSync(join(tmpdir(), 'cryptofort-')), 'legacy.db');
+    const legacy = new Database(path);
+    // The pre-expiry schema: no expires_at column.
+    legacy.exec(`
+      create table cryptofort_credentials (
+        id text primary key,
+        namespace text not null default 'default',
+        name text not null,
+        description text,
+        tags text not null default '[]',
+        provider text,
+        metadata text not null default '{}',
+        created_at text not null,
+        updated_at text not null,
+        last_accessed_at text,
+        secret_ciphertext text not null,
+        secret_iv text not null,
+        secret_tag text not null,
+        key_id text not null default 'default',
+        unique (namespace, name)
+      )`);
+    legacy.close();
+    const migrated = new SqliteAdapter(path);
+    await migrated.init();
+    await migrated.insert(row({ expiresAt: '2026-07-05T00:00:00.000Z' }));
+    const found = await migrated.findByName('default', 'stripe-key');
+    expect(found?.expiresAt).toBe('2026-07-05T00:00:00.000Z');
   });
 });

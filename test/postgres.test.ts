@@ -39,6 +39,7 @@ function dbRow(over: Partial<any> = {}) {
     created_at: '2026-07-04T00:00:00.000Z',
     updated_at: '2026-07-04T00:00:00.000Z',
     last_accessed_at: null,
+    expires_at: over.expires_at ?? null,
     secret_ciphertext: 'ct',
     secret_iv: 'iv',
     secret_tag: 'tag',
@@ -86,6 +87,7 @@ describe('PostgresAdapter', () => {
       createdAt: '2026-07-04T00:00:00.000Z',
       updatedAt: '2026-07-04T00:00:00.000Z',
       lastAccessedAt: null,
+      expiresAt: '2026-07-09T00:00:00.000Z',
       secretCiphertext: 'c',
       secretIv: 'i',
       secretTag: 'g',
@@ -94,6 +96,7 @@ describe('PostgresAdapter', () => {
     await a.insert(rec);
     const payload = sql._fragments.at(-1) as Record<string, unknown>;
     expect(payload.secret_ciphertext).toBe('c');
+    expect(payload.expires_at).toBe('2026-07-09T00:00:00.000Z');
     expect(payload).not.toHaveProperty('secretCiphertext');
   });
 
@@ -105,5 +108,25 @@ describe('PostgresAdapter', () => {
     expect(payload.secret_ciphertext).toBe('c2');
     expect(payload.description).toBe('new');
     expect(payload).not.toHaveProperty('secretCiphertext');
+  });
+
+  it('update maps expiresAt to expires_at, including a clear to null', async () => {
+    const sql = fakeSql();
+    const a = new PostgresAdapter(sql);
+    await a.update('default', 'k', { expiresAt: null });
+    const payload = sql._fragments.at(-1) as Record<string, unknown>;
+    expect(payload).toHaveProperty('expires_at', null);
+    expect(payload).not.toHaveProperty('expiresAt');
+  });
+
+  it('removeExpired deletes by cutoff and counts the returned rows', async () => {
+    const sql = fakeSql();
+    sql._queue([{ id: 'a' }, { id: 'b' }]);
+    const a = new PostgresAdapter(sql);
+    expect(await a.removeExpired('2026-07-04T00:00:00.000Z')).toBe(2);
+    const call = sql._calls.at(-1);
+    expect(call.strings.join('?')).toMatch(/delete from cryptofort_credentials/);
+    expect(call.strings.join('?')).toMatch(/expires_at is not null and expires_at <=/);
+    expect(call.args).toEqual(['2026-07-04T00:00:00.000Z']);
   });
 });
