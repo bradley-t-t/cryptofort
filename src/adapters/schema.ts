@@ -18,6 +18,7 @@ export const POSTGRES_TABLE_DDL = `
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now(),
     last_accessed_at timestamptz,
+    expires_at timestamptz,
     secret_ciphertext text not null,
     secret_iv text not null,
     secret_tag text not null,
@@ -28,6 +29,13 @@ export const POSTGRES_TABLE_DDL = `
 export const POSTGRES_INDEX_DDL = [
   `create index if not exists ${TABLE}_namespace_idx on ${TABLE} (namespace)`,
   `create index if not exists ${TABLE}_tags_idx on ${TABLE} using gin (tags)`,
+];
+
+// Columns added after the first release. Tables built before them exist won't
+// pick them up from `create table if not exists`, so init() also applies these
+// idempotent alters to bring an existing database up to date.
+export const POSTGRES_MIGRATION_DDL = [
+  `alter table ${TABLE} add column if not exists expires_at timestamptz`,
 ];
 
 // Supabase deployments enable RLS as defense-in-depth: with no policies the
@@ -49,6 +57,7 @@ export const SQLITE_TABLE_DDL = `
     created_at text not null,
     updated_at text not null,
     last_accessed_at text,
+    expires_at text,
     secret_ciphertext text not null,
     secret_iv text not null,
     secret_tag text not null,
