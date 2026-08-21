@@ -34,8 +34,15 @@ jobs:
             if (!h || (b && cmp(parts(h), parts(b)) <= 0)) { console.error(`Version must move on for every PR into develop: develop has ${b || "none"}, this PR has ${h || "none"}. Run: npm version patch --no-git-tag-version`); process.exit(1); }
             console.log(`version ${b || "none"} -> ${h}`);
           ' "$base" "$head"
+          if [ -f public/release.json ]; then
+            rel=$(node -e 'console.log(require("./public/release.json").version||"")')
+            if [ "$rel" != "$head" ]; then
+              echo "public/release.json says $rel but package.json says $head; move the version with the project's own tool (bump-version.py) so release metadata keeps up."
+              exit 1
+            fi
+          fi
           if [ -f README.md ]; then
-            badge=$(grep -o 'version-[0-9][0-9A-Za-z.+-]*-' README.md | head -1 | sed 's/^version-//; s/-$//')
+            badge=$(grep -o 'version-[0-9][0-9A-Za-z.+-]*-' README.md | head -1 | sed 's/^version-//; s/-$//' || true)
             if [ -n "$badge" ] && [ "$badge" != "$head" ]; then
               echo "README version badge says $badge but package.json says $head; move the badge with the version (version-badge.py does it)."
               exit 1
