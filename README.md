@@ -154,7 +154,7 @@ The MCP server needs `@modelcontextprotocol/sdk` installed alongside CryptoFort.
 }
 ```
 
-The server is **read-only** by default. Add `"args": ["--allow-write"]` to expose `credential_put` and `credential_delete`.
+The server is **read-only** by default. Add `"args": ["--allow-write"]` to expose `credential_put`, `credential_delete`, and `credential_purge_expired`.
 
 ### Tools
 
