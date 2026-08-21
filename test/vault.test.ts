@@ -114,11 +114,93 @@ describe('Vault', () => {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       lastAccessedAt: null,
+      expiresAt: null,
       secretCiphertext: legacy.ciphertext,
       secretIv: legacy.iv,
       secretTag: legacy.tag,
       keyId: legacy.keyId,
     });
     expect(await v.get('old')).toBe('legacy-secret');
+  });
+});
+
+describe('Vault expiry', () => {
+  let vault: Vault;
+  beforeEach(async () => {
+    vault = await makeVault();
+  });
+
+  const past = new Date(Date.now() - 60_000).toISOString();
+  const future = new Date(Date.now() + 60_000).toISOString();
+
+  it('get returns an unexpired credential and its expiry in metadata', async () => {
+    await vault.put({ name: 'k', secret: 'v', expiresAt: future });
+    expect(await vault.get('k')).toBe('v');
+    const [meta] = await vault.search('k');
+    expect(meta.expiresAt).toBe(future);
+  });
+
+  it('get deletes an expired credential and returns null', async () => {
+    const adapter = new SqliteAdapter(':memory:');
+    await adapter.init();
+    const v = new Vault({ adapter, crypto: new Crypto({ key: generateKey() }) });
+    await v.put({ name: 'k', secret: 'v', expiresAt: past });
+    expect(await v.get('k')).toBeNull();
+    // Gone from the store itself, not just filtered from the response.
+    expect(await adapter.findByName('default', 'k')).toBeNull();
+  });
+
+  it('search and list hide expired credentials before any purge runs', async () => {
+    await vault.put({ name: 'live', secret: 'a', expiresAt: future });
+    await vault.put({ name: 'dead', secret: 'b', expiresAt: past });
+    expect((await vault.search('')).map((m) => m.name)).toEqual(['live']);
+    expect((await vault.list()).map((m) => m.name)).toEqual(['live']);
+  });
+
+  it('purgeExpired deletes only entries whose time has come up', async () => {
+    await vault.put({ name: 'live', secret: 'a', expiresAt: future });
+    await vault.put({ name: 'dead-1', secret: 'b', expiresAt: past });
+    await vault.put({ name: 'dead-2', secret: 'c', namespace: 'other', expiresAt: past });
+    await vault.put({ name: 'forever', secret: 'd' });
+    expect(await vault.purgeExpired()).toBe(2);
+    expect(await vault.get('live')).toBe('a');
+    expect(await vault.get('forever')).toBe('d');
+    expect(await vault.get('dead-1')).toBeNull();
+    expect(await vault.get('dead-2', { namespace: 'other' })).toBeNull();
+  });
+
+  it('purgeExpired reports zero when nothing has expired', async () => {
+    await vault.put({ name: 'k', secret: 'v', expiresAt: future });
+    expect(await vault.purgeExpired()).toBe(0);
+  });
+
+  it('put normalizes the expiry to canonical UTC', async () => {
+    await vault.put({ name: 'k', secret: 'v', expiresAt: '2099-01-01T12:00:00+02:00' });
+    const [meta] = await vault.search('k');
+    expect(meta.expiresAt).toBe('2099-01-01T10:00:00.000Z');
+  });
+
+  it('put rejects an unparseable expiry', async () => {
+    await expect(vault.put({ name: 'k', secret: 'v', expiresAt: 'someday' })).rejects.toThrow(
+      /invalid expiresAt/,
+    );
+  });
+
+  it('put over an expired credential starts fresh instead of inheriting the stale expiry', async () => {
+    await vault.put({ name: 'k', secret: 'old', expiresAt: past });
+    await vault.put({ name: 'k', secret: 'new' });
+    expect(await vault.get('k')).toBe('new');
+    const [meta] = await vault.search('k');
+    expect(meta.expiresAt).toBeNull();
+  });
+
+  it('upsert can set, keep, and clear an expiry', async () => {
+    await vault.put({ name: 'k', secret: 'v1', expiresAt: future });
+    await vault.put({ name: 'k', secret: 'v2' }); // omitted -> unchanged
+    let [meta] = await vault.search('k');
+    expect(meta.expiresAt).toBe(future);
+    await vault.put({ name: 'k', secret: 'v3', expiresAt: null }); // null -> cleared
+    [meta] = await vault.search('k');
+    expect(meta.expiresAt).toBeNull();
   });
 });

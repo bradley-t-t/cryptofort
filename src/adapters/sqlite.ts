@@ -26,6 +26,7 @@ interface DbRow {
   created_at: string;
   updated_at: string;
   last_accessed_at: string | null;
+  expires_at: string | null;
   secret_ciphertext: string;
   secret_iv: string;
   secret_tag: string;
@@ -44,6 +45,7 @@ function toMeta(r: DbRow): CredentialMeta {
     createdAt: r.created_at,
     updatedAt: r.updated_at,
     lastAccessedAt: r.last_accessed_at,
+    expiresAt: r.expires_at,
   };
 }
 
@@ -74,6 +76,14 @@ export class SqliteAdapter implements CredentialStore {
     const Database = (mod.default ?? mod) as DatabaseCtor;
     this.db = new Database(this.path);
     this.db.exec(SQLITE_TABLE_DDL);
+    // SQLite has no `add column if not exists`, so probe for columns added
+    // after the first release and alter a pre-existing table into shape.
+    const columns = this.db
+      .prepare(`select name from pragma_table_info('cryptofort_credentials')`)
+      .all() as { name: string }[];
+    if (!columns.some((c) => c.name === 'expires_at')) {
+      this.db.exec(`alter table cryptofort_credentials add column expires_at text`);
+    }
   }
 
   private conn(): Db {
@@ -86,9 +96,9 @@ export class SqliteAdapter implements CredentialStore {
       .prepare(
         `insert into cryptofort_credentials
          (id, namespace, name, description, tags, provider, metadata,
-          created_at, updated_at, last_accessed_at,
+          created_at, updated_at, last_accessed_at, expires_at,
           secret_ciphertext, secret_iv, secret_tag, key_id)
-         values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+         values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       )
       .run(
         row.id,
@@ -101,6 +111,7 @@ export class SqliteAdapter implements CredentialStore {
         row.createdAt,
         row.updatedAt,
         row.lastAccessedAt,
+        row.expiresAt,
         row.secretCiphertext,
         row.secretIv,
         row.secretTag,
@@ -118,6 +129,7 @@ export class SqliteAdapter implements CredentialStore {
       keyId: 'key_id',
       updatedAt: 'updated_at',
       lastAccessedAt: 'last_accessed_at',
+      expiresAt: 'expires_at',
     };
     const sets: string[] = [];
     const vals: unknown[] = [];
@@ -187,6 +199,15 @@ export class SqliteAdapter implements CredentialStore {
     this.conn()
       .prepare(`delete from cryptofort_credentials where namespace = ? and name = ?`)
       .run(namespace, name);
+  }
+
+  async removeExpired(now: string): Promise<number> {
+    const info = this.conn()
+      .prepare(
+        `delete from cryptofort_credentials where expires_at is not null and expires_at <= ?`,
+      )
+      .run(now) as { changes?: number };
+    return info?.changes ?? 0;
   }
 
   async touchAccessed(namespace: string, name: string): Promise<void> {

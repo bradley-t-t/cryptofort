@@ -1,6 +1,6 @@
 import type { CredentialStore } from './types.js';
 import type { CredentialMeta, ListOptions, SealedRecord, SearchOptions } from '../types.js';
-import { POSTGRES_INDEX_DDL, POSTGRES_TABLE_DDL } from './schema.js';
+import { POSTGRES_INDEX_DDL, POSTGRES_MIGRATION_DDL, POSTGRES_TABLE_DDL } from './schema.js';
 
 /**
  * Structural subset of porsager `postgres`. Two call forms:
@@ -24,6 +24,7 @@ interface DbRow {
   created_at: string;
   updated_at: string;
   last_accessed_at: string | null;
+  expires_at: string | null;
   secret_ciphertext: string;
   secret_iv: string;
   secret_tag: string;
@@ -42,6 +43,7 @@ function toMeta(r: DbRow): CredentialMeta {
     createdAt: r.created_at,
     updatedAt: r.updated_at,
     lastAccessedAt: r.last_accessed_at,
+    expiresAt: r.expires_at,
   };
 }
 
@@ -61,6 +63,7 @@ export class PostgresAdapter implements CredentialStore {
   async init(): Promise<void> {
     await this.sql.unsafe(POSTGRES_TABLE_DDL);
     for (const ddl of POSTGRES_INDEX_DDL) await this.sql.unsafe(ddl);
+    for (const ddl of POSTGRES_MIGRATION_DDL) await this.sql.unsafe(ddl);
   }
 
   async insert(row: SealedRecord): Promise<void> {
@@ -75,6 +78,7 @@ export class PostgresAdapter implements CredentialStore {
       created_at: row.createdAt,
       updated_at: row.updatedAt,
       last_accessed_at: row.lastAccessedAt,
+      expires_at: row.expiresAt,
       secret_ciphertext: row.secretCiphertext,
       secret_iv: row.secretIv,
       secret_tag: row.secretTag,
@@ -91,6 +95,7 @@ export class PostgresAdapter implements CredentialStore {
       metadata: 'metadata',
       updatedAt: 'updated_at',
       lastAccessedAt: 'last_accessed_at',
+      expiresAt: 'expires_at',
       secretCiphertext: 'secret_ciphertext',
       secretIv: 'secret_iv',
       secretTag: 'secret_tag',
@@ -115,7 +120,7 @@ export class PostgresAdapter implements CredentialStore {
     const like = `%${query}%`;
     const rows = (await this.sql`
       select id, namespace, name, description, tags, provider, metadata,
-             created_at, updated_at, last_accessed_at
+             created_at, updated_at, last_accessed_at, expires_at
       from cryptofort_credentials
       where (${!opts.namespace} or namespace = ${opts.namespace ?? ''})
         and (${!query} or name ilike ${like} or description ilike ${like} or provider ilike ${like})
@@ -132,6 +137,13 @@ export class PostgresAdapter implements CredentialStore {
   async remove(namespace: string, name: string): Promise<void> {
     await this.sql`delete from cryptofort_credentials
       where namespace = ${namespace} and name = ${name}`;
+  }
+
+  async removeExpired(now: string): Promise<number> {
+    const rows = await this.sql`delete from cryptofort_credentials
+      where expires_at is not null and expires_at <= ${now}
+      returning id`;
+    return rows.length;
   }
 
   async touchAccessed(namespace: string, name: string): Promise<void> {

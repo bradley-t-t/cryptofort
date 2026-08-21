@@ -75,6 +75,13 @@ export function buildTools(vault: Vault, allowWrite: boolean): Record<string, To
         tags: z.array(z.string()).optional(),
         provider: z.string().optional(),
         namespace: z.string().optional(),
+        expiresAt: z
+          .string()
+          .nullable()
+          .optional()
+          .describe(
+            'ISO 8601 timestamp after which the credential is deleted automatically. Pass null to clear an existing expiry.',
+          ),
       },
       handler: async (a) => {
         await vault.put({
@@ -84,6 +91,7 @@ export function buildTools(vault: Vault, allowWrite: boolean): Record<string, To
           tags: a.tags as string[] | undefined,
           provider: a.provider as string | undefined,
           namespace: a.namespace as string | undefined,
+          expiresAt: a.expiresAt as string | null | undefined,
         });
         return text(`stored: ${a.name as string}`);
       },
@@ -102,6 +110,16 @@ export function buildTools(vault: Vault, allowWrite: boolean): Record<string, To
           namespace: a.namespace as string | undefined,
         });
         return text(deleted ? `deleted: ${name}` : `not found: ${name}`);
+      },
+    };
+
+    tools.credential_purge_expired = {
+      description:
+        'Permanently delete every credential whose expiry time has passed, across all namespaces. Requires the server to run with --allow-write.',
+      schema: {},
+      handler: async () => {
+        const purged = await vault.purgeExpired();
+        return text(`purged: ${purged} expired credential${purged === 1 ? '' : 's'}`);
       },
     };
   }
