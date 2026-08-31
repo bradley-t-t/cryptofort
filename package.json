@@ -1,0 +1,108 @@
+{
+  "name": "cryptofort",
+  "version": "2026.35.5",
+  "description": "Encrypted-at-rest credential vault with pluggable DB backends and an MCP server for agents.",
+  "license": "MIT",
+  "homepage": "https://github.com/bradley-t-t/cryptofort#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bradley-t-t/cryptofort.git"
+  },
+  "bugs": {
+    "url": "https://github.com/bradley-t-t/cryptofort/issues"
+  },
+  "keywords": [
+    "credentials",
+    "secrets",
+    "vault",
+    "secrets-manager",
+    "encryption",
+    "aes-256-gcm",
+    "mcp",
+    "model-context-protocol",
+    "agents",
+    "supabase",
+    "sqlite",
+    "postgres"
+  ],
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "cryptofort-mcp": "./dist/mcp/bin.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./mcp": {
+      "types": "./dist/mcp/server.d.ts",
+      "import": "./dist/mcp/server.js",
+      "require": "./dist/mcp/server.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "prepare": "tsup",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "peerDependencies": {
+    "@modelcontextprotocol/sdk": ">=1.0.0",
+    "@supabase/supabase-js": ">=2.0.0",
+    "better-sqlite3": ">=11.0.0",
+    "postgres": ">=3.4.0"
+  },
+  "peerDependenciesMeta": {
+    "@modelcontextprotocol/sdk": {
+      "optional": true
+    },
+    "@supabase/supabase-js": {
+      "optional": true
+    },
+    "better-sqlite3": {
+      "optional": true
+    },
+    "postgres": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@supabase/supabase-js": "^2.106.2",
+    "@types/better-sqlite3": "^7.6.11",
+    "@types/node": "^22.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.62.1",
+    "@typescript-eslint/parser": "^8.62.1",
+    "better-sqlite3": "^11.0.0",
+    "eslint": "^8.57.1",
+    "postgres": "^3.4.0",
+    "prettier": "^3.9.6",
+    "tsup": "^8.0.0",
+    "typescript": "^5.6.0",
+    "vitest": "^3.2.7"
+  },
+  "dependencies": {
+    "zod": "^4.4.3"
+  },
+  "overrides": {
+    "esbuild": "^0.28.2"
+  }
+}

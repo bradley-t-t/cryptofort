@@ -1,0 +1,24 @@
+node_modules
+dist
+*.log
+.env
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.iml
+*.sql
+
+# Secrets and local tooling state — never commit
+.env.*
+!.env.example
+.intelligence/
+INTELLIGENCE.md
+.fleet/
+.junie/
+*.pem
+*.p12
+*.pfx
+id_rsa
+id_ed25519
