@@ -13,8 +13,7 @@
 </p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/cryptofort"><img src="https://img.shields.io/npm/v/cryptofort?style=for-the-badge&color=1f54c9&logo=npm&logoColor=white" alt="npm" /></a>
-  <a href="https://github.com/bradley-t-t/cryptofort/pkgs/npm/cryptofort"><img src="https://img.shields.io/badge/GitHub%20Packages-@bradley--t--t-1f54c9?style=for-the-badge&logo=github&logoColor=white" alt="GitHub Packages" /></a>
+  <a href="https://github.com/bradley-t-t/cryptofort/pkgs/npm/cryptofort"><img src="https://img.shields.io/badge/GitHub%20Packages-@bradley--t--t%2Fcryptofort-1f54c9?style=for-the-badge&logo=github&logoColor=white" alt="GitHub Packages" /></a>
   <img src="https://img.shields.io/badge/license-MIT-1f54c9?style=for-the-badge" alt="License" />
   <img src="https://img.shields.io/badge/node-%3E%3D20-1f54c9?style=for-the-badge" alt="Node >=20" />
   <img src="https://img.shields.io/badge/AES--256--GCM-encrypted-142e74?style=for-the-badge" alt="AES-256-GCM" />
@@ -63,20 +62,7 @@ Secrets sprawl across `.env` files, shell history, and plaintext columns — and
 
 ### Install
 
-```bash
-npm install cryptofort
-# plus the driver for your backend:
-npm install @supabase/supabase-js   # or: better-sqlite3 | postgres
-# and, to run the MCP server:
-npm install @modelcontextprotocol/sdk
-```
-
-Every driver — and the MCP SDK — is an **optional peer dependency**, so nothing is pulled in that you do not use. Requires Node 20 or newer.
-
-<details>
-<summary>Install from GitHub Packages instead</summary>
-
-CryptoFort is also published to GitHub Packages as `@bradley-t-t/cryptofort`. Point the `@bradley-t-t` scope at the GitHub registry and authenticate with a token that has `read:packages` — GitHub Packages requires auth even for public packages:
+CryptoFort is published to GitHub Packages, which serves owner-scoped names and asks for authentication even on a public package. Point the `@bradley-t-t` scope at it and authenticate with a token carrying `read:packages`:
 
 ```ini
 @bradley-t-t:registry=https://npm.pkg.github.com
@@ -85,14 +71,18 @@ CryptoFort is also published to GitHub Packages as `@bradley-t-t/cryptofort`. Po
 
 ```bash
 npm install @bradley-t-t/cryptofort
+# plus the driver for your backend:
+npm install @supabase/supabase-js   # or: better-sqlite3 | postgres
+# and, to run the MCP server:
+npm install @modelcontextprotocol/sdk
 ```
 
-</details>
+Every driver — and the MCP SDK — is an **optional peer dependency**, so nothing is pulled in that you do not use. Requires Node 20 or newer.
 
 ## Library usage
 
 ```ts
-import { Vault, Crypto, SqliteAdapter } from 'cryptofort';
+import { Vault, Crypto, SqliteAdapter } from '@bradley-t-t/cryptofort';
 
 const adapter = new SqliteAdapter('vault.db');
 await adapter.init();
@@ -132,7 +122,7 @@ Generate a master key (base64, 32 bytes):
 node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 ```
 
-…or from the library with `import { generateKey } from 'cryptofort'`.
+…or from the library with `import { generateKey } from '@bradley-t-t/cryptofort'`.
 
 ## MCP server
 

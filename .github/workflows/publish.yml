@@ -1,8 +1,8 @@
 name: Publish package
 
-# Both registries get every release. npm carries the canonical unscoped name and
-# needs an NPM_TOKEN repo secret; GitHub Packages only accepts owner-scoped names
-# and authenticates with the built-in GITHUB_TOKEN.
+# The package is published to GitHub Packages, which only accepts owner-scoped
+# names and authenticates with the workflow's own GITHUB_TOKEN. No registry
+# credential is stored anywhere for this.
 on:
   release:
     types: [published]
@@ -11,25 +11,9 @@ on:
 permissions:
   contents: read
   packages: write
-  id-token: write
 
 jobs:
-  npm:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          registry-url: https://registry.npmjs.org
-      - run: npm install
-      - run: npm run build
-      - run: npm test
-      - run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-  github-packages:
+  publish:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -39,9 +23,7 @@ jobs:
           registry-url: https://npm.pkg.github.com
       - run: npm install
       - run: npm run build
-      # GitHub Packages requires the owner scope, so publish under the scoped name.
-      - run: npm pkg set name=@bradley-t-t/cryptofort
-      - run: npm pkg delete publishConfig.registry
+      - run: npm test
       - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
