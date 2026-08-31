@@ -134,6 +134,25 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 
 …or from the library with `import { generateKey } from 'cryptofort'`.
 
+### Key rotation
+
+Every sealed record stores the name of the key that sealed it, and opening one needs that key. `keyId` names the key new secrets are sealed under; `keys` is what keeps the older ones openable while records still carry them:
+
+```ts
+const crypto = new Crypto({
+  key: process.env.CRYPTOFORT_MASTER_KEY!, // seals from here on
+  keyId: '2026-q3',
+  keys: {
+    '2026-q3': process.env.CRYPTOFORT_MASTER_KEY!,
+    default: process.env.CRYPTOFORT_PREVIOUS_KEY!, // still opens older records
+  },
+});
+```
+
+Records move onto the active key as they are rewritten — `put` reseals under the current `keyId` — so a rotation completes once every record has been written again. Opening a record whose `keyId` is absent from `keys` throws rather than returning nothing.
+
+The MCP server builds its `Crypto` from `CRYPTOFORT_MASTER_KEY` and `CRYPTOFORT_KEY_ID` alone, which is a single key. It can therefore only open records sealed under the id it was started with: run a rotation through the library, or leave `CRYPTOFORT_KEY_ID` on the old id until nothing is sealed under it.
+
 ## MCP server
 
 The MCP server needs `@modelcontextprotocol/sdk` installed alongside CryptoFort. Point any MCP client at the `cryptofort-mcp` binary:
@@ -162,28 +181,30 @@ The server serves **metadata only** by default: it can say what the vault holds,
 
 ### Tools
 
-| Tool                       | Access      | Description                                                                                     |
-| :------------------------- | :---------- | :---------------------------------------------------------------------------------------------- |
-| `credential_search`        | default     | Search by name, description, provider, or tag. Returns metadata only.                           |
-| `credential_list`          | default     | List credential metadata in a namespace, optionally filtered by tag.                            |
-| `credential_get`           | secret read | Decrypt and return a single secret by exact name. Requires `--allow-secret-read`.               |
-| `credential_put`           | write       | Create or update a credential, optionally with an `expiresAt` expiry. Requires `--allow-write`. |
-| `credential_purge_expired` | write       | Delete every credential whose expiry has passed. Requires `--allow-write`.                      |
-| `credential_delete`        | delete      | Permanently delete a credential by exact name. Requires `--allow-delete`.                       |
+| Tool                       | Access      | Description                                                                                                         |
+| :------------------------- | :---------- | :------------------------------------------------------------------------------------------------------------------ |
+| `credential_search`        | default     | Free-text search over name, description, and provider, with an optional exact `tags` filter. Returns metadata only. |
+| `credential_list`          | default     | List credential metadata in a namespace, optionally filtered by tag.                                                |
+| `credential_get`           | secret read | Decrypt and return a single secret by exact name. Requires `--allow-secret-read`.                                   |
+| `credential_put`           | write       | Create or update a credential, optionally with an `expiresAt` expiry. Requires `--allow-write`.                     |
+| `credential_purge_expired` | write       | Delete every credential whose expiry has passed. Requires `--allow-write`.                                          |
+| `credential_delete`        | delete      | Permanently delete a credential by exact name. Requires `--allow-delete`.                                           |
+
+A free-text `query` matches `name`, `description`, and `provider` on every backend, case-insensitively. It also matches `tags` on SQLite, which stores them as a JSON string, and does not on Postgres or Supabase, which store them as a real array — pass `tags` to match those exactly. Postgres returns at most 1000 rows when no `limit` is given; SQLite and Supabase return every match.
 
 Expired credentials are also purged automatically: the server sweeps them at startup and every hour after that, and an expired entry is unreadable the moment its time passes. Expiries belong to whoever set them, so the sweep runs whatever the server was started with.
 
 ### Environment
 
-| Variable                                     | Required | Purpose                                                                                |
-| :------------------------------------------- | :------- | :------------------------------------------------------------------------------------- |
-| `CRYPTOFORT_MASTER_KEY`                      | always   | Base64, 32-byte AES-256 key. Never written to the database.                            |
-| `CRYPTOFORT_ADAPTER`                         | —        | `supabase` (default), `sqlite`, or `postgres`.                                         |
-| `CRYPTOFORT_KEY_ID`                          | —        | Key identifier for rotation. Defaults to `default`.                                    |
-| `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` | Supabase | Connection for the Supabase adapter.                                                   |
-| `CRYPTOFORT_SUPABASE_DB_URL`                 | —        | Direct Postgres URL, used only to auto-create the schema. Needs the `postgres` driver. |
-| `CRYPTOFORT_POSTGRES_URL`                    | Postgres | Connection string for the Postgres adapter.                                            |
-| `CRYPTOFORT_SQLITE_PATH`                     | —        | SQLite file path. Defaults to `cryptofort.db`.                                         |
+| Variable                                     | Required | Purpose                                                                                         |
+| :------------------------------------------- | :------- | :---------------------------------------------------------------------------------------------- |
+| `CRYPTOFORT_MASTER_KEY`                      | always   | Base64, 32-byte AES-256 key. Never written to the database.                                     |
+| `CRYPTOFORT_ADAPTER`                         | —        | `supabase` (default), `sqlite`, or `postgres`.                                                  |
+| `CRYPTOFORT_KEY_ID`                          | —        | Name stamped on newly sealed secrets. Defaults to `default`. See [Key rotation](#key-rotation). |
+| `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` | Supabase | Connection for the Supabase adapter.                                                            |
+| `CRYPTOFORT_SUPABASE_DB_URL`                 | —        | Direct Postgres URL, used only to auto-create the schema. Needs the `postgres` driver.          |
+| `CRYPTOFORT_POSTGRES_URL`                    | Postgres | Connection string for the Postgres adapter.                                                     |
+| `CRYPTOFORT_SQLITE_PATH`                     | —        | SQLite file path. Defaults to `cryptofort.db`.                                                  |
 
 ## Backends
 
@@ -210,7 +231,7 @@ flowchart TD
 
 ## How it works
 
-- Only the secret is ciphertext. `name`, `description`, `provider`, and `tags` stay plaintext, so search and listing work without ever decrypting.
+- Only the secret is ciphertext. Every other column — `name`, `description`, `provider`, `tags`, `metadata`, `namespace`, the timestamps, and `key_id` — is plaintext, so search and listing work without ever decrypting. Put nothing sensitive in `metadata`: it is stored in the clear, and no adapter searches it either.
 - Each secret is sealed with **AES-256-GCM** — authenticated encryption, so any tampering is caught on read.
 - The **master key never touches the database.** It lives only in `CRYPTOFORT_MASTER_KEY`; a stolen dump reveals nothing without it.
 - The MCP server registers a tool only when the permission covering it was given, so a caller cannot reach `credential_get`, `credential_put`, or `credential_delete` at all rather than being trusted to respect a refusal. A default server can describe the vault and change nothing in it.
@@ -218,12 +239,26 @@ flowchart TD
 
 ## Schema
 
-CryptoFort creates its schema automatically on first connect — one table, one ciphertext column, the rest plaintext metadata for search. There is no migration to run by hand.
+CryptoFort creates its schema on first connect — one table, `cryptofort_credentials`, holding the sealed secret across three columns and everything else as plaintext metadata for search. An empty database needs nothing prepared.
 
-- **SQLite** and **Postgres**: `adapter.init()` issues `create table if not exists` (plus indexes), so pointing CryptoFort at an empty database is enough.
-- **Supabase**: the client speaks PostgREST, which cannot run DDL. `init()` probes for the table and, when it is missing, creates it through a direct Postgres connection given in `CRYPTOFORT_SUPABASE_DB_URL`. If the table already exists the probe is a no-op; if it is missing and no DB URL is set, `init()` fails with a clear message instead of silently.
+- **SQLite** and **Postgres**: `adapter.init()` issues `create table if not exists`, then applies the idempotent alters for columns added after the first release, so an older database is brought up to shape too. Postgres also creates an index on `namespace` and a GIN index on `tags`. SQLite creates neither and leans on the implicit index behind `unique (namespace, name)`.
+- **Supabase**: the client speaks PostgREST, which cannot run DDL. `init()` probes for the table _and_ for `expires_at`, so a table built before that column existed is recognised as needing work. Whatever is missing is created over the direct Postgres connection given in `CRYPTOFORT_SUPABASE_DB_URL` — creating the table that way also enables row-level security, which leaves the anon key able to read nothing. When both the table and the column are already there, the probe is a no-op.
 
-The canonical column definitions live in [`src/adapters/schema.ts`](src/adapters/schema.ts).
+Without that provisioning connection, what `init()` does depends on what is missing:
+
+| Missing                                | Result                                                                                              |
+| :------------------------------------- | :-------------------------------------------------------------------------------------------------- |
+| The table                              | Throws, naming `CRYPTOFORT_SUPABASE_DB_URL` as the thing to set.                                    |
+| Only `expires_at`                      | Warns and carries on — the vault works, minus expiry — and prints the one statement to run by hand. |
+| Neither (auth, network, anything else) | Warns and carries on, so a transient failure does not take down a server that was working.          |
+
+The by-hand statement, for the column case:
+
+```sql
+alter table cryptofort_credentials add column expires_at timestamptz;
+```
+
+The DDL lives in [`src/adapters/schema.ts`](src/adapters/schema.ts): the table name, columns, indexes, post-release migrations, and the RLS statement. It is canonical for what the database is _created_ with. Each adapter carries its own column list for reading and writing, so a column added to `schema.ts` exists in the database without being read or written until those lists name it too.
 
 ## Project structure
 
@@ -237,9 +272,9 @@ cryptofort/
 │   ├── types.ts               Credential and search types, DEFAULT_NAMESPACE
 │   ├── adapters/
 │   │   ├── types.ts           The CredentialStore contract
-│   │   ├── schema.ts          Canonical column definitions
+│   │   ├── schema.ts          Table, index, migration and RLS statements
 │   │   ├── supabase.ts        PostgREST, with optional direct-Postgres provisioning
-│   │   ├── postgres.ts        `postgres` driver
+│   │   ├── postgres.ts        Postgres over an injected `Sql` client
 │   │   └── sqlite.ts          better-sqlite3
 │   └── mcp/
 │       ├── bin.ts             The `cryptofort-mcp` executable and its permission flags
@@ -271,7 +306,7 @@ Backend drivers are optional peer dependencies — install only the one you use.
 
 ## License
 
-Released under the MIT License.
+Released under the [MIT License](LICENSE).
 
 <br />
 
