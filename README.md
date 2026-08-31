@@ -306,7 +306,7 @@ Backend drivers are optional peer dependencies — install only the one you use.
 
 ## License
 
-Released under the MIT License.
+Released under the [MIT License](LICENSE).
 
 <br />
 
