@@ -56,7 +56,7 @@ export function buildTools(vault: Vault, access: ToolAccess = {}): Record<string
   const tools: Record<string, ToolDef> = {
     credential_search: {
       description:
-        'Search stored credentials by name, description, provider, or tag. Returns metadata only — never the secret value.',
+        'Search stored credentials. The free-text query matches name, description and provider; pass tags to filter by exact tag. Returns metadata only — never the secret value.',
       schema: {
         query: z.string().describe('Free-text search term'),
         tags: z.array(z.string()).optional(),
