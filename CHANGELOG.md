@@ -8,7 +8,7 @@ the entries rather than the number to judge whether an upgrade is breaking.
 Breaking changes are always listed under **Changed** or **Removed** and called
 out as breaking.
 
-## [Unreleased]
+## [2026.36.0] - 2026-09-01
 
 ### Added
 
@@ -30,4 +30,4 @@ out as breaking.
 Releases published before this file existed are listed on the
 [releases page](https://github.com/bradley-t-t/cryptofort/releases).
 
-[unreleased]: https://github.com/bradley-t-t/cryptofort/compare/main...develop
+[2026.36.0]: https://github.com/bradley-t-t/cryptofort/releases/tag/v2026.36.0
