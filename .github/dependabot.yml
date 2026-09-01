@@ -1,0 +1,49 @@
+version: 2
+
+# Dependency updates land on develop, the same as any other change, so they go
+# through the ordinary pull request checks before a release picks them up.
+updates:
+  - package-ecosystem: npm
+    directory: /
+    target-branch: develop
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      # No prefix: the project writes plain imperative summaries, and the
+      # attribution gate reads every commit message that reaches a branch.
+      prefix: ''
+    groups:
+      # One pull request for the toolchain rather than six. These move together
+      # and are checked by the same run.
+      dev-tooling:
+        patterns:
+          - '@typescript-eslint/*'
+          - 'eslint'
+          - 'prettier'
+          - 'tsup'
+          - 'typescript'
+          - 'vitest'
+          - '@types/*'
+        update-types:
+          - minor
+          - patch
+      backend-drivers:
+        patterns:
+          - '@supabase/supabase-js'
+          - 'better-sqlite3'
+          - 'postgres'
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: develop
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: ''

@@ -1,0 +1,62 @@
+name: Feature request
+description: Suggest a capability CryptoFort does not have.
+labels: ['enhancement']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        CryptoFort deliberately does one thing: seal credentials at rest and hand
+        agents metadata instead of secrets. The most useful part of a request is
+        the problem you hit — the API can be designed afterwards.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What are you trying to do that CryptoFort makes hard or impossible today?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you would like it to do
+      description: A sketch is fine. Show the call or config you wish existed.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What you tried instead
+      description: Workarounds you have already used, and why they fall short.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part of CryptoFort
+      options:
+        - Vault API
+        - Encryption / key handling
+        - MCP server or its tools
+        - A backend adapter
+        - A new backend adapter
+        - Documentation
+        - Something else
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: security
+    attributes:
+      label: Security impact
+      description: >
+        Anything that widens what a caller can reach — a new default-on MCP tool,
+        a new way to obtain plaintext — needs saying out loud.
+      options:
+        - label: This would let a caller reach a secret, or reach more than it can today.
+          required: false
+        - label: I have read SECURITY.md and this is not a vulnerability report.
+          required: true
