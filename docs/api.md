@@ -92,7 +92,7 @@ One exception: if the existing record has **already expired**, it is deleted and
 replaced wholesale rather than patched, so a stale expiry, description, or tag
 set cannot ride along and kill the new secret.
 
-`expiresAt` accepts any string `Date.parse` understands and is normalised to
+`expiresAt` accepts any string `Date.parse` understands and is normalized to
 canonical UTC ISO 8601 before storage. An unparseable value throws
 `cryptofort: invalid expiresAt timestamp: <value>`.
 

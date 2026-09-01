@@ -195,7 +195,7 @@ The server sweeps expired credentials at startup and every hour after that.
 
 The sweep **does not** depend on `--allow-write`. It enforces expiries the vault
 owner already set rather than making a new decision, so a metadata-only server
-still honours them. When a sweep deletes anything it says so on stderr:
+still honors them. When a sweep deletes anything it says so on stderr:
 
 ```
 cryptofort-mcp purged 3 expired credential(s)

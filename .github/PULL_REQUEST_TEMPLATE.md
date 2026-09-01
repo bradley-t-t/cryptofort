@@ -32,8 +32,8 @@ npm run build
 ## Checklist
 
 - [ ] The five commands above pass locally.
-- [ ] Behaviour I added or changed is covered by a test.
-- [ ] The README and `docs/` match the behaviour after this change.
+- [ ] Behavior I added or changed is covered by a test.
+- [ ] The README and `docs/` match the behavior after this change.
 - [ ] `CHANGELOG.md` has an entry under **Unreleased**, if a user would notice this change.
 - [ ] No secret, key, or connection string appears anywhere in the diff — including tests and fixtures.
 - [ ] Commits are authored under my own name and email, with no AI attribution trailers (CI refuses them).

@@ -115,7 +115,7 @@ const deleted = await vault.purgeExpired();
 Call it on whatever schedule suits your app. The MCP server runs it for you, at
 startup and hourly. Pass `expiresAt: null` to a later `put` to clear an expiry.
 
-## 5. Organise with namespaces
+## 5. Organize with namespaces
 
 Every credential lives in a namespace, defaulting to `default`:
 
@@ -133,7 +133,7 @@ Note the asymmetry: `put`, `get`, and `remove` default to the `default`
 namespace, while `search` and `list` span **all** namespaces unless you pass
 one.
 
-Namespaces organise credentials. They are not a permission boundary — see
+Namespaces organize credentials. They are not a permission boundary — see
 [the security model](security.md).
 
 ## 6. Point an MCP client at it

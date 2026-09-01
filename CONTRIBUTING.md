@@ -33,7 +33,7 @@ match what CI does, CI is right and this document is a bug worth reporting.
 - **Suggest a feature.** Use the feature request template. The most useful part
   is the problem, not the proposed API.
 - **Improve the docs.** Anything in [`docs/`](docs/) or the README. Corrections
-  are as valuable as additions; a doc that describes behaviour the code does not
+  are as valuable as additions; a doc that describes behavior the code does not
   have is worse than no doc.
 - **Send a patch.** Small, focused pull requests get reviewed fastest.
 
@@ -118,7 +118,7 @@ your-branch  ──▶  develop  ──▶  main  ──▶  npm + GitHub Packag
 - Branch off `develop` and open your pull request against `develop`.
 - Only release pull requests go from `develop` into `main`, and only those need
   a version bump.
-- Keep one logical change per pull request. A formatting sweep and a behaviour
+- Keep one logical change per pull request. A formatting sweep and a behavior
   change in the same diff are two pull requests.
 - Fill in the pull request template. The part that matters most is how you
   verified the change.
@@ -126,12 +126,12 @@ your-branch  ──▶  develop  ──▶  main  ──▶  npm + GitHub Packag
   force-push over someone else's branch.
 
 A pull request is ready when the five local checks pass, the description says
-what changed and why, and any behaviour you added or altered is covered by a
+what changed and why, and any behavior you added or altered is covered by a
 test and reflected in the docs.
 
 ## Commit messages
 
-Write a short, capitalised, imperative summary of what the commit does, with no
+Write a short, capitalized, imperative summary of what the commit does, with no
 type prefix:
 
 ```
@@ -202,8 +202,8 @@ server running is a test that stops being run.
 What a change should come with:
 
 - A **bug fix** gets a test that fails before the fix and passes after it.
-- A **new behaviour** gets a test for the happy path and for the edge that made
-  the behaviour necessary.
+- A **new behavior** gets a test for the happy path and for the edge that made
+  the behavior necessary.
 - A **new MCP tool** gets a case in `mcp.test.ts` asserting it appears only
   under the permission that should expose it.
 - **Anything touching crypto or expiry** gets a test. These are the two places
@@ -226,7 +226,7 @@ encrypts, never decrypts, and never inspects a ciphertext.
 - Store timestamps as ISO 8601 UTC. `removeExpired` compares against a string,
   and on SQLite that comparison is textual, so a non-canonical timestamp sorts
   wrongly and an expiry silently fails to fire.
-- Add a suite modelled on an existing adapter test, and export the adapter from
+- Add a suite modeled on an existing adapter test, and export the adapter from
   `src/index.ts`.
 - Drivers stay **optional peer dependencies**: import them dynamically
   (`await import('postgres')`) so nobody installs a database client they do not
@@ -253,7 +253,7 @@ it, give every argument a Zod schema, and add the registration test.
 ## Documentation
 
 The README is the front door and [`docs/`](docs/) is the manual. If your change
-alters behaviour a user can see — an environment variable, a tool, a flag, a
+alters behavior a user can see — an environment variable, a tool, a flag, a
 default — update both in the same pull request.
 
 Docs are excluded from the published npm tarball, so they can be as long as they

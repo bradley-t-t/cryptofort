@@ -42,7 +42,7 @@ SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOi…
 CRYPTOFORT_SUPABASE_DB_URL=postgres://postgres:pass@db.abcdefgh.supabase.co:5432/postgres
 ```
 
-An unrecognised value fails at startup with
+An unrecognized value fails at startup with
 `cryptofort: unknown CRYPTOFORT_ADAPTER '<value>'`.
 
 [Backends](backends.md) covers what each one is good for and how the schema is

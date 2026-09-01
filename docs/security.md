@@ -105,7 +105,7 @@ passes — not when a sweep gets round to it:
   startup and hourly, regardless of `--allow-write`, because it enforces a
   decision the vault owner already made rather than taking a new one.
 
-Timestamps are normalised to canonical UTC on write. That is not cosmetic: on
+Timestamps are normalized to canonical UTC on write. That is not cosmetic: on
 SQLite the column is compared as text, so a value in a different offset or
 format would sort wrongly and its expiry would silently fail to fire.
 
@@ -188,7 +188,7 @@ Two limits to know:
   later. See [configuration](configuration.md#how-values-are-validated).
 - **Diagnostics never carry secrets.** The MCP server logs to stderr, and what
   it logs is which permissions are on and how many rows a purge removed.
-- **Row-level security is enabled on Supabase** as defence in depth. With no
+- **Row-level security is enabled on Supabase** as defense in depth. With no
   policies the anon key reads nothing. The rows hold ciphertext regardless — RLS
   is a second layer, not the first.
 
@@ -197,8 +197,8 @@ Two limits to know:
 Stated plainly, because a security tool that is trusted for more than it does is
 worse than none:
 
-- **No authorisation model.** No users, no roles, no per-caller permissions.
-  Anyone with the key and a connection reads everything. Namespaces organise
+- **No authorization model.** No users, no roles, no per-caller permissions.
+  Anyone with the key and a connection reads everything. Namespaces organize
   credentials; they are not a permission boundary. Deciding who may run the
   process is your layer's job.
 - **No memory protection.** A decrypted secret is an ordinary JavaScript string
@@ -211,7 +211,7 @@ worse than none:
 - **No protection from your backend's own credentials.** A Supabase service-role
   key is full database access by itself. A SQLite vault is as private as its
   file permissions.
-- **No defence once the key is out.** Everything above assumes
+- **No defense once the key is out.** Everything above assumes
   `CRYPTOFORT_MASTER_KEY` is secret. It is the single point of failure by
   design, which is why it lives in exactly one place and never in the database.
 

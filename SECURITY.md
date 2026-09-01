@@ -96,9 +96,9 @@ Equally important, and not bugs:
   Give `--allow-secret-read` to a process that uses the value and exits — not to
   a chat session.
 - **There is no user model.** CryptoFort has no accounts, roles, or per-caller
-  authorisation. Anyone holding the key and a connection can read everything.
-  Namespaces organise credentials; they are not a permission boundary.
-  Authorisation belongs in the layer that decides who may run the process.
+  authorization. Anyone holding the key and a connection can read everything.
+  Namespaces organize credentials; they are not a permission boundary.
+  Authorization belongs in the layer that decides who may run the process.
 - **Decrypted secrets live in ordinary memory.** Plaintext is a normal
   JavaScript string. It is not pinned, not zeroed, and may be copied by the
   garbage collector. A heap dump or a debugger on a live process can read it.
@@ -107,7 +107,7 @@ Equally important, and not bugs:
   vault.
 - **The backend's own access control is yours.** A Supabase service-role key
   grants full database access on its own; the row-level security CryptoFort
-  enables is defence in depth over encrypted rows, not the primary control. A
+  enables is defense in depth over encrypted rows, not the primary control. A
   SQLite vault is only as private as its file permissions.
 - **Deletion is not shredding.** `remove` issues a `delete`. Recovering the row
   from backups, WAL, or unvacuumed pages is a property of your database, not of

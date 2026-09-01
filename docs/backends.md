@@ -170,7 +170,7 @@ The **service-role key** is required. The anon key cannot write this table, and
 CryptoFort is a server-side component — a service-role key in a browser is a
 full database compromise, so never ship one to a client.
 
-`init()` enables row-level security on the table as defence in depth: with no
+`init()` enables row-level security on the table as defense in depth: with no
 policies, the anon key can read nothing. The real protection is the app-level
 AES-256-GCM, since the rows hold ciphertext either way, and RLS is harmless on a
 table the service role owns.
@@ -228,7 +228,7 @@ exceptions:
    server, so a large result can still come back short. Pass an explicit `limit`
    whenever the exact number matters to you.
 3. **Timestamps are typed differently.** Postgres and Supabase use `timestamptz`;
-   SQLite stores ISO 8601 text and compares it as text. The vault normalises
+   SQLite stores ISO 8601 text and compares it as text. The vault normalizes
    every timestamp to canonical UTC before storing precisely so that textual
    comparison still orders chronologically — which is why an adapter of your own
    must do the same.
