@@ -1,0 +1,106 @@
+name: Bug report
+description: Something in CryptoFort does not behave the way it is documented to.
+labels: ['bug']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report.
+
+        **If this is a security issue — a way to read a secret you should not be
+        able to read — please stop and report it privately instead:
+        [open a security advisory](https://github.com/bradley-t-t/cryptofort/security/advisories/new).**
+
+        **Never paste a real secret, master key, service-role key, or connection
+        string into this form.** Replace them with obvious placeholders.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What did CryptoFort do, and what did you expect it to do instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: How to reproduce
+      description: >
+        The smallest code, MCP client config, or sequence of calls that shows the
+        problem. A failing test against this repository is ideal.
+      render: typescript
+    validations:
+      required: true
+
+  - type: textarea
+    id: output
+    attributes:
+      label: Error output
+      description: The full error or log, with secrets redacted.
+      render: shell
+    validations:
+      required: false
+
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Where does it happen
+      options:
+        - Library (Vault / Crypto / adapters)
+        - MCP server (cryptofort-mcp)
+        - Both
+        - Not sure
+    validations:
+      required: true
+
+  - type: dropdown
+    id: backend
+    attributes:
+      label: Backend
+      options:
+        - SQLite
+        - Postgres
+        - Supabase
+        - Not backend-specific
+        - Not sure
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: CryptoFort version
+      description: From `npm ls cryptofort`, or the version the MCP server announces.
+      placeholder: '2026.35.5'
+    validations:
+      required: true
+
+  - type: input
+    id: node
+    attributes:
+      label: Node version
+      description: Output of `node -v`. CryptoFort requires Node 20 or newer.
+      placeholder: 'v22.11.0'
+    validations:
+      required: true
+
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: 'macOS 15.1 / Ubuntu 24.04 / Windows 11'
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched the existing issues and this is not a duplicate.
+          required: true
+        - label: I am on the latest release, or I have said which version I am on and why.
+          required: true
+        - label: There are no real secrets, keys, or connection strings anywhere in this report.
+          required: true

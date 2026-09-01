@@ -15,7 +15,7 @@
 <p align="center">
   <a href="https://www.npmjs.com/package/cryptofort"><img src="https://img.shields.io/npm/v/cryptofort?style=for-the-badge&color=1f54c9&logo=npm&logoColor=white" alt="npm" /></a>
   <a href="https://github.com/bradley-t-t/cryptofort/pkgs/npm/cryptofort"><img src="https://img.shields.io/badge/GitHub%20Packages-@bradley--t--t-1f54c9?style=for-the-badge&logo=github&logoColor=white" alt="GitHub Packages" /></a>
-  <img src="https://img.shields.io/badge/license-MIT-1f54c9?style=for-the-badge" alt="License" />
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-1f54c9?style=for-the-badge" alt="License: MIT" /></a>
   <img src="https://img.shields.io/badge/node-%3E%3D20-1f54c9?style=for-the-badge" alt="Node >=20" />
   <img src="https://img.shields.io/badge/AES--256--GCM-encrypted-142e74?style=for-the-badge" alt="AES-256-GCM" />
   <img src="https://img.shields.io/badge/MCP-ready-1f54c9?style=for-the-badge" alt="MCP ready" />
@@ -89,6 +89,20 @@ npm install @bradley-t-t/cryptofort
 
 </details>
 
+## Documentation
+
+The rest of this page is the tour. [`docs/`](docs/) is the manual.
+
+| Page                                       | Covers                                                                       |
+| :----------------------------------------- | :--------------------------------------------------------------------------- |
+| [Getting started](docs/getting-started.md) | Install, generate a key, store and read a credential, wire up an MCP client. |
+| [Configuration](docs/configuration.md)     | Every environment variable, and what CryptoFort refuses to accept.           |
+| [Library API](docs/api.md)                 | `Vault`, `Crypto`, the adapters, and every exported type.                    |
+| [MCP server](docs/mcp.md)                  | The six tools, the three permission flags, and client configuration.         |
+| [Backends](docs/backends.md)               | Supabase, Postgres, and SQLite — setup, schema, and how they differ.         |
+| [Security model](docs/security.md)         | The threat model, key rotation, and what is deliberately not protected.      |
+| [Troubleshooting](docs/troubleshooting.md) | Every error CryptoFort raises, what it means, and how to clear it.           |
+
 ## Library usage
 
 ```ts
@@ -154,7 +168,7 @@ The MCP server needs `@modelcontextprotocol/sdk` installed alongside CryptoFort.
 }
 ```
 
-The server serves **metadata only** by default: it can say what the vault holds, and nothing that would tell you a secret. Two flags widen that, and they are separate because they answer different questions.
+The server serves **metadata only** by default: it can say what the vault holds, and nothing that would tell you a secret. Three flags widen that, and they are separate because they answer different questions.
 
 - `"args": ["--allow-secret-read"]` exposes `credential_get`, which returns a decrypted secret to whoever called it. Give it to a process that will use the value and exit — not to an agent whose conversation is written to disk, because a secret handed to one stays in that transcript for as long as the transcript does.
 - `"args": ["--allow-write"]` exposes `credential_put` and `credential_purge_expired`. A put can be put again, and a purge only removes what an expiry had already killed.
@@ -164,8 +178,8 @@ The server serves **metadata only** by default: it can say what the vault holds,
 
 | Tool                       | Access      | Description                                                                                     |
 | :------------------------- | :---------- | :---------------------------------------------------------------------------------------------- |
-| `credential_search`        | default     | Search by name, description, provider, or tag. Returns metadata only.                           |
-| `credential_list`          | default     | List credential metadata in a namespace, optionally filtered by tag.                            |
+| `credential_search`        | default     | Search by name, description, or provider; filter by tag. Returns metadata only.                 |
+| `credential_list`          | default     | List credential metadata, optionally filtered by namespace and tag.                             |
 | `credential_get`           | secret read | Decrypt and return a single secret by exact name. Requires `--allow-secret-read`.               |
 | `credential_put`           | write       | Create or update a credential, optionally with an `expiresAt` expiry. Requires `--allow-write`. |
 | `credential_purge_expired` | write       | Delete every credential whose expiry has passed. Requires `--allow-write`.                      |
@@ -246,7 +260,10 @@ cryptofort/
 │       ├── server.ts          Tool definitions, exported as `cryptofort/mcp`
 │       ├── config.ts          Crypto and adapter construction from the environment
 │       └── env.ts             Reading and refusing environment values
-├── test/                      crypto, vault, mcp, and one suite per adapter
+├── test/                      crypto, vault, mcp, env, and one suite per adapter
+├── docs/                      Getting started, configuration, API, MCP, backends, security
+├── CONTRIBUTING.md            Setup, the checks CI runs, and the branch flow
+├── SECURITY.md                Reporting a vulnerability, and the threat model
 └── tsup.config.ts
 ```
 
@@ -268,10 +285,48 @@ npm test           # run the vitest suite
 | `npm run format:check` | Check formatting without rewriting, the way CI does. |
 
 Backend drivers are optional peer dependencies — install only the one you use.
+They are dev dependencies here, so a full install gives you everything the test
+suite needs, and no database has to be running: the adapter suites drive fakes.
+
+## Contributing
+
+Contributions are welcome — bug reports, documentation corrections, and patches
+alike. [CONTRIBUTING.md](CONTRIBUTING.md) covers local setup, the checks CI runs,
+the `develop` → `main` branch flow, and the conventions this codebase follows,
+including how to add a backend adapter or an MCP tool.
+
+The short version: branch off `develop`, open your pull request against
+`develop`, and make sure these pass first.
+
+```bash
+npm ci
+npm run format:check && npm run lint && npm run typecheck && npm test && npm run build
+```
+
+Everyone taking part is expected to follow the
+[Code of Conduct](CODE_OF_CONDUCT.md).
+
+## Security
+
+CryptoFort stores credentials, so a flaw in it is a flaw in whatever it holds.
+
+**Please do not report a vulnerability in a public issue.** Open a
+[private security advisory](https://github.com/bradley-t-t/cryptofort/security/advisories/new)
+instead — [SECURITY.md](SECURITY.md) has the process, the response times, and an
+explicit account of what CryptoFort protects and what it deliberately does not.
+
+Two things are worth knowing before you store anything:
+
+- **Only the secret is encrypted.** `name`, `description`, `provider`, `tags`,
+  and `metadata` are plaintext so search can work without decrypting. Never put
+  a secret in one of them.
+- **The master key is the whole of the vault's security.** Keep it in a secret
+  manager, use a different one per environment, and never commit it or store it
+  in the database it unlocks.
 
 ## License
 
-Released under the MIT License.
+Released under the [MIT License](LICENSE).
 
 <br />
 
