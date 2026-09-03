@@ -234,7 +234,7 @@ flowchart TD
 
 CryptoFort creates its schema automatically on first connect — one table, one ciphertext column, the rest plaintext metadata for search. There is no migration to run by hand.
 
-- **SQLite** and **Postgres**: `adapter.init()` issues `create table if not exists` (plus indexes), so pointing CryptoFort at an empty database is enough.
+- **SQLite** and **Postgres**: `adapter.init()` issues `create table if not exists` (plus indexes on Postgres), so pointing CryptoFort at an empty database is enough.
 - **Supabase**: the client speaks PostgREST, which cannot run DDL. `init()` probes for the table and, when it is missing, creates it through a direct Postgres connection given in `CRYPTOFORT_SUPABASE_DB_URL`. If the table already exists the probe is a no-op; if it is missing and no DB URL is set, `init()` fails with a clear message instead of silently.
 
 The canonical column definitions live in [`src/adapters/schema.ts`](src/adapters/schema.ts).
@@ -261,7 +261,7 @@ cryptofort/
 │       ├── config.ts          Crypto and adapter construction from the environment
 │       └── env.ts             Reading and refusing environment values
 ├── test/                      crypto, vault, mcp, env, and one suite per adapter
-├── docs/                      Getting started, configuration, API, MCP, backends, security
+├── docs/                      Getting started, configuration, API, MCP, backends, security, troubleshooting
 ├── CONTRIBUTING.md            Setup, the checks CI runs, and the branch flow
 ├── SECURITY.md                Reporting a vulnerability, and the threat model
 └── tsup.config.ts

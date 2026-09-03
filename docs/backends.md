@@ -29,7 +29,7 @@ by hand. One table, `cryptofort_credentials`:
 | `secret_ciphertext`, `secret_iv`, `secret_tag` | The sealed secret. Base64. **The only encrypted columns.** |
 | `key_id`                                       | Which key sealed it, for rotation.                         |
 
-Indexes on `namespace` and, on Postgres, a GIN index on `tags`.
+On Postgres and Supabase, an index on `namespace` and a GIN index on `tags`.
 
 The canonical definitions live in
 [`src/adapters/schema.ts`](../src/adapters/schema.ts) rather than in a `.sql`
