@@ -98,8 +98,7 @@ Four possibilities, in order of likelihood:
    another namespace. `search` results carry the `namespace` field; pass it.
 2. **The name is not exact.** `get` matches exactly; `search` matches
    substrings.
-3. **It expired.** The record is deleted at that moment, so it is now genuinely
-   gone.
+3. **It expired.** The record is deleted at that moment, so it is now gone.
 4. **A different vault.** Under an MCP server, a relative
    `CRYPTOFORT_SQLITE_PATH` resolves against the client's working directory, so
    an empty database may have been created somewhere you did not intend. Use an

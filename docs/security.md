@@ -50,7 +50,7 @@ substitute one for another and have it open.
 
 Records written before AAD binding existed were sealed without it, so `get`
 retries once without the AAD to keep them readable, and they pick up the binding
-the next time they are `put`. A genuinely tampered or swapped record fails the
+the next time they are `put`. A tampered or swapped record fails the
 second attempt too, so the error still surfaces.
 
 ## The permission model

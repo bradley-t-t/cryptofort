@@ -191,7 +191,7 @@ Vitest, one suite per unit, in `test/`:
 | `vault.test.ts`    | put/get/search/list/remove and expiry semantics.      |
 | `mcp.test.ts`      | Which tools each permission combination registers.    |
 | `env.test.ts`      | Sanitising and refusing environment values.           |
-| `sqlite.test.ts`   | The SQLite adapter against a fake driver.             |
+| `sqlite.test.ts`   | The SQLite adapter against an in-memory database.     |
 | `postgres.test.ts` | The Postgres adapter against a fake `sql` tag.        |
 | `supabase.test.ts` | The Supabase adapter against a fake PostgREST client. |
 
