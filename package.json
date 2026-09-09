@@ -1,6 +1,6 @@
 {
   "name": "cryptofort",
-  "version": "2026.36.2",
+  "version": "2026.37.0",
   "description": "Encrypted-at-rest credential vault with pluggable DB backends and an MCP server for agents.",
   "license": "MIT",
   "homepage": "https://github.com/bradley-t-t/cryptofort#readme",
@@ -87,8 +87,8 @@
   "devDependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
     "@supabase/supabase-js": "^2.106.2",
-    "@types/better-sqlite3": "^7.6.11",
-    "@types/node": "^22.0.0",
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/node": "^26.4.1",
     "@typescript-eslint/eslint-plugin": "^8.62.1",
     "@typescript-eslint/parser": "^8.62.1",
     "better-sqlite3": "^13.0.3",
