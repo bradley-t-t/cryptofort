@@ -92,7 +92,7 @@
     "@typescript-eslint/eslint-plugin": "^8.62.1",
     "@typescript-eslint/parser": "^8.62.1",
     "better-sqlite3": "^13.0.3",
-    "eslint": "^8.57.1",
+    "eslint": "^10.10.0",
     "postgres": "^3.4.0",
     "prettier": "^3.9.6",
     "tsup": "^8.0.0",
