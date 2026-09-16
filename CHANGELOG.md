@@ -8,7 +8,7 @@ the entries rather than the number to judge whether an upgrade is breaking.
 Breaking changes are always listed under **Changed** or **Removed** and called
 out as breaking.
 
-## Unreleased
+## 2026.38.0 - 2026-09-15
 
 ### Added
 
