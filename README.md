@@ -262,9 +262,15 @@ cryptofort/
 │       └── env.ts             Reading and refusing environment values
 ├── test/                      crypto, vault, mcp, env, and one suite per adapter
 ├── docs/                      Getting started, configuration, API, MCP, backends, security, troubleshooting
+├── CHANGELOG.md               What each release carried
 ├── CONTRIBUTING.md            Setup, the checks CI runs, and the branch flow
 ├── SECURITY.md                Reporting a vulnerability, and the threat model
-└── tsup.config.ts
+├── CODE_OF_CONDUCT.md         Contributor Covenant 2.1
+├── LICENSE                    MIT
+├── tsconfig.json
+├── tsup.config.ts
+├── vitest.config.ts
+└── eslint.config.js
 ```
 
 ## Development
@@ -281,6 +287,7 @@ npm test           # run the vitest suite
 | `npm test`             | Run the Vitest suite.                                |
 | `npm run typecheck`    | `tsc --noEmit`.                                      |
 | `npm run lint`         | Lint with ESLint.                                    |
+| `npm run lint:fix`     | Lint and apply every fix ESLint can make.            |
 | `npm run format`       | Rewrite files to Prettier's formatting.              |
 | `npm run format:check` | Check formatting without rewriting, the way CI does. |
 
@@ -305,6 +312,8 @@ npm run format:check && npm run lint && npm run typecheck && npm test && npm run
 
 Everyone taking part is expected to follow the
 [Code of Conduct](CODE_OF_CONDUCT.md).
+
+What each release carried is in [CHANGELOG.md](CHANGELOG.md).
 
 ## Security
 
