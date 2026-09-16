@@ -74,6 +74,7 @@ npm run build
 | `npm test`             | Run the Vitest suite once.                           |
 | `npm run typecheck`    | `tsc --noEmit`.                                      |
 | `npm run lint`         | Lint with ESLint.                                    |
+| `npm run lint:fix`     | Lint and apply every fix ESLint can make.            |
 | `npm run format`       | Rewrite files to Prettier's formatting.              |
 | `npm run format:check` | Check formatting without rewriting, the way CI does. |
 
@@ -93,10 +94,11 @@ It has to pass before anything merges.
    rather than in a local hook. Configure git with your own name and email
    before you commit.
 2. **Version moved on.** Only on pull requests into `main`. The version in
-   `package.json` must be strictly greater than the one on `main`, and — where
-   the file exists — `public/release.json` and the README version badge must
-   agree with it. Pull requests into `develop` are not version-gated, so a
-   normal change does not need a bump.
+   `package.json` must be strictly greater than the one on `main`. Where a
+   `public/release.json` or a README version badge exists, it must agree with
+   it; this repository has neither, so only the bump itself is checked. Pull
+   requests into `develop` are not version-gated, so a normal change does not
+   need a bump.
 3. **Install and check.** `npm ci`, then `format:check`, `lint`, `typecheck`,
    `test`, and `build`, in that order.
 
@@ -268,8 +270,9 @@ Maintainers cut releases; contributors do not need to.
 2. Open a release pull request from `develop` into `main`. The version gate
    checks the bump.
 3. Merge, then publish a GitHub Release. That triggers the publish workflow,
-   which builds, tests, and publishes to npm as `cryptofort` and to GitHub
-   Packages as `@bradley-t-t/cryptofort`.
+   which builds and publishes to npm as `cryptofort` and to GitHub Packages as
+   `@bradley-t-t/cryptofort`. The npm job runs the test suite first; the
+   GitHub Packages job builds and publishes the same commit.
 
 ## Security work
 

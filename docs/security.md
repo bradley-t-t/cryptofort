@@ -142,11 +142,11 @@ new one.
 import { Vault, Crypto } from 'cryptofort';
 
 const crypto = new Crypto({
-  key: process.env.CRYPTOFORT_NEW_KEY!, // seals everything from now on
+  key: process.env.NEW_MASTER_KEY!, // seals everything from now on
   keyId: '2026-09', // stamped on new records
   keys: {
-    '2026-09': process.env.CRYPTOFORT_NEW_KEY!,
-    default: process.env.CRYPTOFORT_OLD_KEY!, // still opens old records
+    '2026-09': process.env.NEW_MASTER_KEY!,
+    default: process.env.OLD_MASTER_KEY!, // still opens old records
   },
 });
 
@@ -186,8 +186,11 @@ Two limits to know:
   quote, a non-breaking space, or a carriage return is refused by name and
   position instead of producing an inscrutable failure inside an HTTP client
   later. See [configuration](configuration.md#how-values-are-validated).
-- **Diagnostics never carry secrets.** The MCP server logs to stderr, and what
-  it logs is which permissions are on and how many rows a purge removed.
+- **Diagnostics never carry secrets.** The MCP server logs to stderr: which
+  permissions are on, how many rows a purge removed, and — when a purge or a
+  schema probe fails — the driver's own error. No CryptoFort message contains a
+  secret, though a driver error can name the connection it was made on, so
+  treat the server's stderr as you would any database log.
 - **Row-level security is enabled on Supabase** as defense in depth. With no
   policies the anon key reads nothing. The rows hold ciphertext regardless — RLS
   is a second layer, not the first.
