@@ -96,9 +96,9 @@ It has to pass before anything merges.
 2. **Version moved on.** Only on pull requests into `main`. The version in
    `package.json` must be strictly greater than the one on `main`. Where a
    `public/release.json` or a README version badge exists, it must agree with
-   it; this repository has neither, so only the bump itself is checked. Pull
-   requests into `develop` are not version-gated, so a normal change does not
-   need a bump.
+   that version; this repository has neither, so only the bump itself is
+   checked. Pull requests into `develop` are not version-gated, so a normal
+   change does not need a bump.
 3. **Install and check.** `npm ci`, then `format:check`, `lint`, `typecheck`,
    `test`, and `build`, in that order.
 

@@ -12,8 +12,7 @@ out as breaking.
 
 ### Added
 
-- `npm run lint:fix`, so the fixes ESLint can make no longer have to be applied
-  by hand.
+- `npm run lint:fix`, so you no longer have to apply ESLint's fixes by hand.
 
 ### Changed
 
