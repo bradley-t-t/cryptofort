@@ -8,7 +8,45 @@ the entries rather than the number to judge whether an upgrade is breaking.
 Breaking changes are always listed under **Changed** or **Removed** and called
 out as breaking.
 
-## [2026.36.0] - 2026-09-01
+## 2026.38.0 - 2026-09-15
+
+### Added
+
+- `npm run lint:fix`, so you no longer have to apply ESLint's fixes by hand.
+
+### Changed
+
+- The lint configuration is `eslint.config.js` rather than `.eslintrc.cjs`.
+  ESLint 10 reads only the flat format; the rules themselves are unchanged.
+- ESLint 10, Vitest 5, Zod 4.6 and `@supabase/supabase-js` 2.116.
+
+### Removed
+
+- `.npmignore`. The `files` field in `package.json` already decides what ships,
+  and it takes precedence, so the list had no effect on any published tarball.
+
+## 2026.37.0 - 2026-09-09
+
+### Changed
+
+- Toolchain and driver updates: `@supabase/supabase-js`, `@types/node`,
+  `@types/better-sqlite3`, and the grouped development tooling.
+
+## 2026.36.2 - 2026-09-03
+
+### Fixed
+
+- Documentation corrected wherever it disagreed with the code.
+
+## 2026.36.1 - 2026-09-02
+
+### Changed
+
+- `better-sqlite3` 11 to 13, Vitest 3 to 4, `@supabase/supabase-js`, the
+  grouped development tooling, and the GitHub Actions CI runs on.
+- American spellings throughout the documentation.
+
+## 2026.36.0 - 2026-09-01
 
 ### Added
 
@@ -29,5 +67,3 @@ out as breaking.
 
 Releases published before this file existed are listed on the
 [releases page](https://github.com/bradley-t-t/cryptofort/releases).
-
-[2026.36.0]: https://github.com/bradley-t-t/cryptofort/releases/tag/v2026.36.0

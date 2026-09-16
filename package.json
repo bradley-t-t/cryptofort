@@ -1,6 +1,6 @@
 {
   "name": "cryptofort",
-  "version": "2026.37.0",
+  "version": "2026.38.0",
   "description": "Encrypted-at-rest credential vault with pluggable DB backends and an MCP server for agents.",
   "license": "MIT",
   "homepage": "https://github.com/bradley-t-t/cryptofort#readme",
@@ -54,12 +54,13 @@
   ],
   "scripts": {
     "build": "tsup",
-    "prepare": "tsup",
-    "test": "vitest run",
-    "typecheck": "tsc --noEmit",
     "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "prepare": "tsup"
   },
   "engines": {
     "node": ">=20"
@@ -85,6 +86,7 @@
     }
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@modelcontextprotocol/sdk": "^1.0.0",
     "@supabase/supabase-js": "^2.106.2",
     "@types/better-sqlite3": "^9.6.0",
@@ -92,12 +94,13 @@
     "@typescript-eslint/eslint-plugin": "^8.62.1",
     "@typescript-eslint/parser": "^8.62.1",
     "better-sqlite3": "^13.0.3",
-    "eslint": "^8.57.1",
+    "eslint": "^10.10.0",
+    "globals": "^16.5.0",
     "postgres": "^3.4.0",
     "prettier": "^3.9.6",
     "tsup": "^8.0.0",
     "typescript": "^5.6.0",
-    "vitest": "^4.1.11"
+    "vitest": "^5.0.0"
   },
   "dependencies": {
     "zod": "^4.4.3"

@@ -22,3 +22,6 @@ INTELLIGENCE.md
 *.pfx
 id_rsa
 id_ed25519
+
+# Local agent tooling: worktrees and session state, never part of a checkout.
+.claude/
