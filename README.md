@@ -126,7 +126,7 @@ await vault.search('stripe'); // metadata only — never the secret
 await vault.get('stripe-secret-key'); // the decrypted secret
 ```
 
-Only `secret` is encrypted. `name`, `description`, `provider`, `tags` and `metadata` stay plaintext so search works without the key — never put a secret in one of them. [Getting started](docs/getting-started.md) covers generating the master key, expiry, and namespaces.
+CryptoFort encrypts only the `secret` field. `name`, `description`, `provider`, `tags` and `metadata` stay plaintext so search works without the master key. Never put a secret in one of them. [Getting started](docs/getting-started.md) covers generating the master key, expiry, and namespaces.
 
 ## MCP server
 
@@ -154,7 +154,7 @@ The server serves **metadata only** by default: it can say what the vault holds,
 - `"args": ["--allow-write"]` exposes `credential_put` and `credential_purge_expired`. A put can be put again, and a purge only removes what an expiry had already killed.
 - `"args": ["--allow-delete"]` exposes `credential_delete`. It is separate because it is the one call the vault cannot answer for afterwards: the secret is gone and no copy is kept.
 
-[MCP server](docs/mcp.md) documents each tool, and [Configuration](docs/configuration.md) every environment variable.
+With no flag the server registers only `credential_search` and `credential_list`. The [MCP server page](docs/mcp.md) documents all six tools, and the [configuration page](docs/configuration.md) every environment variable.
 
 ## Architecture
 

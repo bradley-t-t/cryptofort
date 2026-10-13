@@ -254,8 +254,8 @@ it, give every argument a Zod schema, and add the registration test.
 ## Documentation
 
 [`docs/`](docs/) is the manual and the README only summarizes it. If your
-change alters behavior a user can see — an environment variable, a tool, a
-flag, a default — update the page in `docs/` that describes it in the same pull
+change alters behavior a user can see (an environment variable, a tool, a
+flag, a default), update the page in `docs/` that describes it in the same pull
 request, and the README too if its summary no longer holds.
 
 Docs are excluded from the published npm tarball, so they can be as long as they
