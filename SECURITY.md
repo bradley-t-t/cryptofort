@@ -49,9 +49,11 @@ Upgrade before reporting a bug you can only reproduce on an old version.
 
 ## What is and is not a vulnerability
 
-[The security model](docs/security.md) lists the properties CryptoFort is
-written to hold and the ones it deliberately does not. A demonstration that one
-of the held properties fails is a vulnerability.
+A vulnerability is any demonstration that CryptoFort fails a property it is
+written to hold, such as a stolen database staying unreadable without the master
+key, or a tampered ciphertext failing to open.
+[The security model](docs/security.md) lists every property it holds and the
+ones it deliberately does not.
 
 ## Out of scope
 
@@ -59,7 +61,9 @@ The following are not accepted as vulnerabilities:
 
 - Anything that already assumes possession of `CRYPTOFORT_MASTER_KEY`, the
   database credentials, or the host.
-- The fact that metadata columns are plaintext. That is the design.
+- The fact that the metadata columns (`name`, `description`, `provider`,
+  `tags`, `metadata`) are plaintext. That is the design: search works without
+  the master key.
 - The fact that `--allow-secret-read` returns a secret to its caller. That is
   what the flag is for; the question of who may hold it is an operator decision.
 - Dependency advisories with no demonstrated path through CryptoFort's own code.
