@@ -24,14 +24,13 @@ match what CI does, CI is right and this document is a bug worth reporting.
 
 ## Ways to contribute
 
-- **Report a bug.** Open an [issue](https://github.com/bradley-t-t/cryptofort/issues/new/choose)
-  with the bug report template. A failing snippet is worth more than a
-  description of one.
+- **Report a bug.** Open an [issue](https://github.com/bradley-t-t/cryptofort/issues/new).
+  A failing snippet is worth more than a description of one.
 - **Report a vulnerability.** Not in an issue — see [SECURITY.md](SECURITY.md).
   This is a credential vault, so a flaw in it is worth reporting privately
   first.
-- **Suggest a feature.** Use the feature request template. The most useful part
-  is the problem, not the proposed API.
+- **Suggest a feature.** Open an issue. The most useful part is the problem,
+  not the proposed API.
 - **Improve the docs.** Anything in [`docs/`](docs/) or the README. Corrections
   are as valuable as additions; a doc that describes behavior the code does not
   have is worse than no doc.
@@ -122,8 +121,8 @@ your-branch  ──▶  develop  ──▶  main  ──▶  npm + GitHub Packag
   a version bump.
 - Keep one logical change per pull request. A formatting sweep and a behavior
   change in the same diff are two pull requests.
-- Fill in the pull request template. The part that matters most is how you
-  verified the change.
+- Say in the description how you verified the change. That is the part that
+  matters most.
 - Rebasing or merging `develop` back in to resolve a conflict is fine. Do not
   force-push over someone else's branch.
 
@@ -254,9 +253,10 @@ it, give every argument a Zod schema, and add the registration test.
 
 ## Documentation
 
-The README is the front door and [`docs/`](docs/) is the manual. If your change
-alters behavior a user can see — an environment variable, a tool, a flag, a
-default — update both in the same pull request.
+[`docs/`](docs/) is the manual and the README only summarizes it. If your
+change alters behavior a user can see (an environment variable, a tool, a
+flag, a default), update the page in `docs/` that describes it in the same pull
+request, and the README too if its summary no longer holds.
 
 Docs are excluded from the published npm tarball, so they can be as long as they
 need to be.
@@ -283,10 +283,6 @@ alongside the advisory.
 
 Ordinary hardening that does not disclose a live weakness is a normal pull
 request.
-
-## Code of Conduct
-
-Participation is governed by the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## License
 

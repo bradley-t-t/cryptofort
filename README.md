@@ -126,27 +126,7 @@ await vault.search('stripe'); // metadata only — never the secret
 await vault.get('stripe-secret-key'); // the decrypted secret
 ```
 
-Credentials can be given an expiry, after which they are deleted automatically:
-
-```ts
-await vault.put({
-  name: 'ci-deploy-token',
-  secret: 'ghp_…',
-  expiresAt: '2026-09-01T00:00:00Z', // ISO 8601; pass null later to clear it
-});
-
-await vault.purgeExpired(); // delete every entry whose time has come up
-```
-
-Once `expiresAt` passes, the credential is dead everywhere at once: `get` deletes it and returns `null`, and `search`/`list` no longer show it — even before a purge sweep has physically removed the row. `purgeExpired()` does the physical cleanup; call it on whatever schedule suits your app (the MCP server runs it for you, at startup and hourly).
-
-Generate a master key (base64, 32 bytes):
-
-```bash
-node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
-```
-
-…or from the library with `import { generateKey } from 'cryptofort'`.
+CryptoFort encrypts only the `secret` field. `name`, `description`, `provider`, `tags` and `metadata` stay plaintext so search works without the master key. Never put a secret in one of them. [Getting started](docs/getting-started.md) covers generating the master key, expiry, and namespaces.
 
 ## MCP server
 
@@ -174,38 +154,7 @@ The server serves **metadata only** by default: it can say what the vault holds,
 - `"args": ["--allow-write"]` exposes `credential_put` and `credential_purge_expired`. A put can be put again, and a purge only removes what an expiry had already killed.
 - `"args": ["--allow-delete"]` exposes `credential_delete`. It is separate because it is the one call the vault cannot answer for afterwards: the secret is gone and no copy is kept.
 
-### Tools
-
-| Tool                       | Access      | Description                                                                                     |
-| :------------------------- | :---------- | :---------------------------------------------------------------------------------------------- |
-| `credential_search`        | default     | Search by name, description, or provider; filter by tag. Returns metadata only.                 |
-| `credential_list`          | default     | List credential metadata, optionally filtered by namespace and tag.                             |
-| `credential_get`           | secret read | Decrypt and return a single secret by exact name. Requires `--allow-secret-read`.               |
-| `credential_put`           | write       | Create or update a credential, optionally with an `expiresAt` expiry. Requires `--allow-write`. |
-| `credential_purge_expired` | write       | Delete every credential whose expiry has passed. Requires `--allow-write`.                      |
-| `credential_delete`        | delete      | Permanently delete a credential by exact name. Requires `--allow-delete`.                       |
-
-Expired credentials are also purged automatically: the server sweeps them at startup and every hour after that, and an expired entry is unreadable the moment its time passes. Expiries belong to whoever set them, so the sweep runs whatever the server was started with.
-
-### Environment
-
-| Variable                                     | Required | Purpose                                                                                |
-| :------------------------------------------- | :------- | :------------------------------------------------------------------------------------- |
-| `CRYPTOFORT_MASTER_KEY`                      | always   | Base64, 32-byte AES-256 key. Never written to the database.                            |
-| `CRYPTOFORT_ADAPTER`                         | —        | `supabase` (default), `sqlite`, or `postgres`.                                         |
-| `CRYPTOFORT_KEY_ID`                          | —        | Key identifier for rotation. Defaults to `default`.                                    |
-| `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` | Supabase | Connection for the Supabase adapter.                                                   |
-| `CRYPTOFORT_SUPABASE_DB_URL`                 | —        | Direct Postgres URL, used only to auto-create the schema. Needs the `postgres` driver. |
-| `CRYPTOFORT_POSTGRES_URL`                    | Postgres | Connection string for the Postgres adapter.                                            |
-| `CRYPTOFORT_SQLITE_PATH`                     | —        | SQLite file path. Defaults to `cryptofort.db`.                                         |
-
-## Backends
-
-| Backend      | Driver                  | Best for                                                  |
-| :----------- | :---------------------- | :-------------------------------------------------------- |
-| **Supabase** | `@supabase/supabase-js` | Hosted, shared across agents, service-role access.        |
-| **Postgres** | `postgres`              | Dropping the vault into existing Postgres infrastructure. |
-| **SQLite**   | `better-sqlite3`        | Local, single-process, zero-infrastructure use.           |
+With no flag the server registers only `credential_search` and `credential_list`. The [MCP server page](docs/mcp.md) documents all six tools, and the [configuration page](docs/configuration.md) every environment variable.
 
 ## Architecture
 
@@ -222,116 +171,26 @@ flowchart TD
     AD --> Q[("SQLite")]
 ```
 
-## How it works
-
-- Only the secret is ciphertext. `name`, `description`, `provider`, and `tags` stay plaintext, so search and listing work without ever decrypting.
-- Each secret is sealed with **AES-256-GCM** — authenticated encryption, so any tampering is caught on read.
-- The **master key never touches the database.** It lives only in `CRYPTOFORT_MASTER_KEY`; a stolen dump reveals nothing without it.
-- The MCP server registers a tool only when the permission covering it was given, so a caller cannot reach `credential_get`, `credential_put`, or `credential_delete` at all rather than being trusted to respect a refusal. A default server can describe the vault and change nothing in it.
-- Credentials with an `expiresAt` die on schedule: reads treat an expired entry as gone immediately, and purge sweeps (hourly in the MCP server, or `vault.purgeExpired()` in your own code) delete the rows themselves.
-
-## Schema
-
-CryptoFort creates its schema automatically on first connect — one table, one ciphertext column, the rest plaintext metadata for search. There is no migration to run by hand.
-
-- **SQLite** and **Postgres**: `adapter.init()` issues `create table if not exists` (plus indexes on Postgres), so pointing CryptoFort at an empty database is enough.
-- **Supabase**: the client speaks PostgREST, which cannot run DDL. `init()` probes for the table and, when it is missing, creates it through a direct Postgres connection given in `CRYPTOFORT_SUPABASE_DB_URL`. If the table already exists the probe is a no-op; if it is missing and no DB URL is set, `init()` fails with a clear message instead of silently.
-
-The canonical column definitions live in [`src/adapters/schema.ts`](src/adapters/schema.ts).
-
-## Project structure
-
-```
-cryptofort/
-├── assets/cryptofort-hero.png
-├── src/
-│   ├── index.ts               Public surface — Vault, Crypto, the three adapters, types
-│   ├── vault.ts               put / get / search / list / remove / purgeExpired over an adapter
-│   ├── crypto.ts              AES-256-GCM seal/open, generateKey
-│   ├── types.ts               Credential and search types, DEFAULT_NAMESPACE
-│   ├── adapters/
-│   │   ├── types.ts           The CredentialStore contract
-│   │   ├── schema.ts          Canonical column definitions
-│   │   ├── supabase.ts        PostgREST, with optional direct-Postgres provisioning
-│   │   ├── postgres.ts        `postgres` driver
-│   │   └── sqlite.ts          better-sqlite3
-│   └── mcp/
-│       ├── bin.ts             The `cryptofort-mcp` executable and its permission flags
-│       ├── server.ts          Tool definitions, exported as `cryptofort/mcp`
-│       ├── config.ts          Crypto and adapter construction from the environment
-│       └── env.ts             Reading and refusing environment values
-├── test/                      crypto, vault, mcp, env, and one suite per adapter
-├── docs/                      Getting started, configuration, API, MCP, backends, security, troubleshooting
-├── CHANGELOG.md               What each release carried
-├── CONTRIBUTING.md            Setup, the checks CI runs, and the branch flow
-├── SECURITY.md                Reporting a vulnerability, and the threat model
-├── CODE_OF_CONDUCT.md         Contributor Covenant 2.1
-├── LICENSE                    MIT
-├── tsconfig.json
-├── tsup.config.ts
-├── vitest.config.ts
-└── eslint.config.js
-```
-
-## Development
-
-```bash
-npm install
-npm run build      # bundle with tsup
-npm test           # run the vitest suite
-```
-
-| Script                 | Does                                                 |
-| :--------------------- | :--------------------------------------------------- |
-| `npm run build`        | Bundle ESM, CJS, and types with tsup.                |
-| `npm test`             | Run the Vitest suite.                                |
-| `npm run typecheck`    | `tsc --noEmit`.                                      |
-| `npm run lint`         | Lint with ESLint.                                    |
-| `npm run lint:fix`     | Lint and apply every fix ESLint can make.            |
-| `npm run format`       | Rewrite files to Prettier's formatting.              |
-| `npm run format:check` | Check formatting without rewriting, the way CI does. |
-
-Backend drivers are optional peer dependencies — install only the one you use.
-They are dev dependencies here, so a full install gives you everything the test
-suite needs, and no database has to be running: the adapter suites drive fakes.
-
 ## Contributing
 
-Contributions are welcome — bug reports, documentation corrections, and patches
-alike. [CONTRIBUTING.md](CONTRIBUTING.md) covers local setup, the checks CI runs,
-the `develop` → `main` branch flow, and the conventions this codebase follows,
-including how to add a backend adapter or an MCP tool.
-
-The short version: branch off `develop`, open your pull request against
-`develop`, and make sure these pass first.
+Branch off `develop`, open the pull request against `develop`, and run what CI
+runs before you push:
 
 ```bash
 npm ci
 npm run format:check && npm run lint && npm run typecheck && npm test && npm run build
 ```
 
-Everyone taking part is expected to follow the
-[Code of Conduct](CODE_OF_CONDUCT.md).
-
-What each release carried is in [CHANGELOG.md](CHANGELOG.md).
+[CONTRIBUTING.md](CONTRIBUTING.md) covers the rest: the checks, the branch flow,
+and how to add a backend adapter or an MCP tool.
 
 ## Security
 
-CryptoFort stores credentials, so a flaw in it is a flaw in whatever it holds.
-
-**Please do not report a vulnerability in a public issue.** Open a
-[private security advisory](https://github.com/bradley-t-t/cryptofort/security/advisories/new)
-instead — [SECURITY.md](SECURITY.md) has the process, the response times, and an
-explicit account of what CryptoFort protects and what it deliberately does not.
-
-Two things are worth knowing before you store anything:
-
-- **Only the secret is encrypted.** `name`, `description`, `provider`, `tags`,
-  and `metadata` are plaintext so search can work without decrypting. Never put
-  a secret in one of them.
-- **The master key is the whole of the vault's security.** Keep it in a secret
-  manager, use a different one per environment, and never commit it or store it
-  in the database it unlocks.
+Report a vulnerability through a
+[private security advisory](https://github.com/bradley-t-t/cryptofort/security/advisories/new),
+never a public issue. [SECURITY.md](SECURITY.md) has the process, and
+[the security model](docs/security.md) says what CryptoFort protects and what it
+deliberately does not.
 
 ## License
 
