@@ -1,6 +1,6 @@
 {
   "name": "cryptofort",
-  "version": "2026.44.1",
+  "version": "2026.44.2",
   "description": "Encrypted credential vault for Node with SQLite, Postgres and Supabase backends and an MCP server for agents",
   "license": "MIT",
   "homepage": "https://github.com/bradley-t-t/cryptofort#readme",
