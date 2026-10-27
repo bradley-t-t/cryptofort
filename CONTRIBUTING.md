@@ -41,7 +41,7 @@ the design can be agreed before the code is written.
 
 ## Getting set up
 
-You need **Node 20 or newer**. CI runs the checks on Node 22.
+You need **Node 22.18 or newer** to build and test; the published package still runs on Node 20 or newer. CI runs the checks on Node 22.
 
 ```bash
 git clone https://github.com/bradley-t-t/cryptofort.git
