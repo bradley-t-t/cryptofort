@@ -8,14 +8,18 @@ CryptoFort is an encrypted credential vault for Node apps and the AI agents that
 
 It also comes with an MCP server. By default it can only search and list the vault, so an agent can find the right credential by name, provider or tag but can't read the secret.
 
-## Features
+<details>
+<summary>Features</summary>
 
 - Search and list credentials by name, description, provider or tag, without decrypting anything
 - Works with SQLite, Postgres or Supabase
 - Namespaces, and optional expiry dates that remove a credential once they pass
 - TypeScript types, ESM and CommonJS builds
 
-## Install
+</details>
+
+<details>
+<summary>Install</summary>
 
 ```bash
 npm install cryptofort
@@ -27,7 +31,10 @@ Needs Node 20 or newer. The database drivers and the MCP SDK are optional peer d
 
 Generate a master key with `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"` and put it in your environment as `CRYPTOFORT_MASTER_KEY`. If you lose that key, everything it encrypted is gone with it.
 
-## Usage
+</details>
+
+<details>
+<summary>Usage</summary>
 
 ```ts
 import { Vault, Crypto, SqliteAdapter } from 'cryptofort';
@@ -47,7 +54,10 @@ await vault.get('stripe-secret-key'); // the decrypted secret
 
 Only `secret` is encrypted. `name`, `description`, `provider`, `tags` and `metadata` are stored in plain text so search works, so don't put anything sensitive in them.
 
-## MCP server
+</details>
+
+<details>
+<summary>MCP server</summary>
 
 Point your MCP client at the `cryptofort-mcp` binary:
 
@@ -75,12 +85,20 @@ Add flags under `"args"` to turn on more tools:
 | `--allow-write`       | `credential_put`, `credential_purge_expired`    |
 | `--allow-delete`      | `credential_delete`                             |
 
-## Docs
+</details>
+
+<details>
+<summary>Docs</summary>
 
 The [docs](docs) folder covers [getting started](docs/getting-started.md), [configuration](docs/configuration.md), the [library API](docs/api.md), the [MCP server](docs/mcp.md), [backends](docs/backends.md), the [security model](docs/security.md) and [troubleshooting](docs/troubleshooting.md). To report a security problem, open a [private security advisory](https://github.com/bradley-t-t/cryptofort/security/advisories/new) instead of a public issue. [CONTRIBUTING.md](CONTRIBUTING.md) explains how to work on it.
 
+</details>
+
 Built with TypeScript, Zod and the MCP SDK, bundled with tsup and tested with Vitest.
 
-## License
+<details>
+<summary>License</summary>
 
 [MIT](LICENSE)
+
+</details>
