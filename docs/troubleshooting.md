@@ -180,6 +180,41 @@ They are already unreadable: `get` reports them as not found and `search` and
 row, which the hourly sweep removes. To force it, restart the server — it sweeps
 at startup — or call `vault.purgeExpired()`.
 
+## Running commands
+
+### `cryptofort run: the vault holds no '<name>' in namespace '<ns>', or it has expired, so nothing was run`
+
+Every credential is resolved before the command starts, and one that is missing
+stops the run. Check the name with `credential_search` or `vault.search()`, and
+the namespace: `cryptofort run` reads from `default` unless you pass
+`--namespace`, while search spans every namespace. An expired credential is
+deleted on this read, so it will not be found a second time either.
+
+### `cryptofort run: <path> can be read by other users; chmod 600 it`
+
+The env file holds the master key, so a copy anyone else can read is refused.
+Run `chmod 600 <path>`. If other users really could read it, treat the key as
+exposed and rotate it. See [the security model](security.md#rotating-the-master-key).
+
+### `cryptofort run: no env file at <path>`
+
+The path given to `--env-file` does not exist. A relative path is read from the
+directory you ran the command in, and a leading `~/` from your home directory.
+
+### `cryptofort run: <command>: command not found`
+
+The command after `--` is not on `PATH`. It is run directly, with no shell in
+between, so shell aliases, functions and built-ins are not available. Wrap them
+in `sh -c '…'` if you need them.
+
+### The command cannot find a variable it expects
+
+A credential given without `=<ENV_VAR>` goes into its name in upper case, with
+other characters turned into underscores. `db.url` arrives as `DB_URL`, not
+`DATABASE_URL`. Name the variable explicitly: `db.url=DATABASE_URL`. The
+command also never sees `CRYPTOFORT_*` variables or `SUPABASE_SERVICE_ROLE_KEY`
+unless a credential is mapped onto one of them.
+
 ## Installation
 
 ### `better-sqlite3` fails to build
@@ -197,8 +232,9 @@ selects, plus the SDK if you run the MCP server.
 
 ### Node version errors
 
-CryptoFort requires **Node 20 or newer** — it uses `crypto.subtle` and
-`crypto.randomUUID` from the global Web Crypto object. Check with `node -v`.
+CryptoFort requires **Node 22 or newer**. Node 20 reached end of life in April
+2026, and `cryptofort run` reads env files with `util.parseEnv`. Check with
+`node -v`.
 
 ## Still stuck
 

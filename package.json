@@ -34,7 +34,8 @@
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "cryptofort-mcp": "./dist/mcp/bin.js"
+    "cryptofort-mcp": "./dist/mcp/bin.js",
+    "cryptofort": "./dist/cli/bin.js"
   },
   "exports": {
     ".": {
@@ -63,7 +64,7 @@
     "prepare": "tsup"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "peerDependencies": {
     "@modelcontextprotocol/sdk": ">=1.0.0",
