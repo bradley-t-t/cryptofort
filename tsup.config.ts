@@ -7,11 +7,10 @@ import { createRequire } from 'node:module';
 const { version } = createRequire(import.meta.url)('./package.json') as { version: string };
 
 export default defineConfig({
-  entry: ['src/index.ts', 'src/mcp/server.ts', 'src/mcp/bin.ts'],
+  entry: ['src/index.ts', 'src/mcp/server.ts', 'src/mcp/bin.ts', 'src/cli/bin.ts'],
   format: ['esm', 'cjs'],
   dts: true,
   clean: true,
-  sourcemap: true,
-  target: 'node20',
+  target: 'node22',
   define: { __CRYPTOFORT_VERSION__: JSON.stringify(version) },
 });

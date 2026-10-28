@@ -87,8 +87,15 @@ posture from the vault it came out of.
 
 So the shape to aim for is: the agent finds _which_ credential is needed
 (metadata, no key involved), and a process that runs one operation with the value
-fetches it and exits. Two servers against the same vault — one metadata-only for
-the agent, one `--allow-secret-read` for the worker — is a normal configuration.
+fetches it and exits. [`cryptofort run`](run.md) is that process: it decrypts the
+named credentials into a command's environment, prints nothing, and keeps the
+vault's own variables from the command. Two servers against the same vault — one
+metadata-only for the agent, one `--allow-secret-read` for a worker — is the other
+normal configuration.
+
+Neither stops a command that prints what it was given. They keep a secret away
+from an agent that runs commands it was given, not from one that writes the
+command itself.
 
 The same logic applies in reverse to `credential_put`: to store a secret through
 a chat, the secret has to be typed into the chat. Seed vaults from a script that
@@ -123,7 +130,9 @@ inert; the two together are a complete compromise.
   or `generateKey()`. Not a passphrase, not a UUID, not something memorable.
 - **Store it in a secret manager**, a CI secret, or your host's environment
   settings — never in the repository, an image layer, a log line, or the
-  database it unlocks.
+  database it unlocks. On your own machine, a file readable by you alone,
+  loaded by a launcher, keeps it out of MCP client configs, which get synced and
+  committed.
 - **One key per environment.** Sharing a key between development and production
   makes a development leak a production leak.
 - **Whoever can start the process has the vault.** The MCP server holds the key
