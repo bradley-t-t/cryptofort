@@ -1,12 +1,14 @@
-<p align="center"><img src="assets/cryptofort-hero.png" width="160" alt=""></p>
-<h1 align="center">CryptoFort</h1>
-<p align="center">
+<img src="assets/cryptofort-hero.png" width="160" alt="">
+
+# CryptoFort
+
+<p>
   <a href="https://www.npmjs.com/package/cryptofort"><img src="https://img.shields.io/npm/v/cryptofort?color=1f54c9" alt="npm version"></a>
 </p>
 
-CryptoFort is an encrypted credential vault for Node apps and the AI agents that work on them. It keeps API keys, tokens and other secrets in SQLite, Postgres or Supabase, encrypted with AES-256-GCM. The master key lives in your environment and never goes in the database.
+An encrypted credential vault for Node apps and the AI agents that work on them. API keys, tokens and other secrets go in SQLite, Postgres or Supabase, encrypted with AES-256-GCM. The master key stays in your environment, never in the database.
 
-It also comes with an MCP server. By default it can only search and list the vault, so an agent can find the right credential by name, provider or tag but can't read the secret.
+It comes with an MCP server. By default it can only search and list, so an agent can find the right credential by name, provider or tag but can't read the secret.
 
 <details>
 <summary>Features</summary>
@@ -27,7 +29,7 @@ npm install better-sqlite3              # or: postgres, @supabase/supabase-js
 npm install @modelcontextprotocol/sdk   # only if you want the MCP server
 ```
 
-Needs Node 20 or newer. The database drivers and the MCP SDK are optional peer dependencies, so you only install the ones you use. The package is also on GitHub Packages as `@bradley-t-t/cryptofort`.
+Needs Node 20 or newer. The database drivers and the MCP SDK are optional peer dependencies. Install the ones you use. The package is also on GitHub Packages as `@bradley-t-t/cryptofort`.
 
 Generate a master key with `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"` and put it in your environment as `CRYPTOFORT_MASTER_KEY`. If you lose that key, everything it encrypted is gone with it.
 
@@ -52,7 +54,24 @@ await vault.search('stripe'); // metadata only, no secret
 await vault.get('stripe-secret-key'); // the decrypted secret
 ```
 
-Only `secret` is encrypted. `name`, `description`, `provider`, `tags` and `metadata` are stored in plain text so search works, so don't put anything sensitive in them.
+Only `secret` is encrypted. `name`, `description`, `provider`, `tags` and `metadata` are plain text so search works. Don't put anything sensitive in them.
+
+</details>
+
+<details>
+<summary>Design</summary>
+
+**Sealing.** Each secret is AES-256-GCM through Web Crypto. Fresh 12-byte IV per write, 16-byte tag in its own column. The additional authenticated data is `namespace\0name`. It's bound into the tag but not stored, so a ciphertext can't be moved. Copy the sealed columns of `staging/db-url` over `production/db-url` and the read fails the tag check instead of handing back the staging secret. Someone with write access can destroy a record but can't swap one in. Records sealed before the binding existed still open without it, and pick it up on their next write.
+
+**Key rotation.** Every record carries a `keyId`. `Crypto` takes a map of old keys for opening and seals new writes with the active one. Rotating is a config change, not a migration.
+
+**Plaintext metadata, on purpose.** Only `secret` is encrypted. Name, provider, tags and metadata stay plain so search and list never touch a key. That's what lets the MCP server describe the vault without a secret ever leaving the database.
+
+**MCP permissions by omission.** Without `--allow-secret-read`, `credential_get` is never registered. No handler checks a flag a model could argue past. The tool just isn't there. Read, write and delete are separate flags because they go wrong differently: a read puts plaintext in a transcript, a bad write can be rewritten, a delete is gone. The intended setup is two servers on one vault: metadata-only for the agent, secret-read for a worker process.
+
+**Expiry** is checked on read. `get` deletes an expired record and returns `null`, and search and list skip it. `purgeExpired()` removes the rows, and the MCP server runs it at startup and every hour. Timestamps are stored as UTC because SQLite compares them as text.
+
+**Adapters** (`src/adapters/`) share one interface. The drivers are optional peer dependencies, so a SQLite user never installs `postgres`.
 
 </details>
 
