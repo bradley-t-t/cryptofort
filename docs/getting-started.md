@@ -1,9 +1,9 @@
 # Getting started
 
 This page takes you from an empty project to a working vault, then to an MCP
-client that can search it.
+client that can search it and a command that can use what it finds.
 
-**Requires Node 20 or newer.**
+**Requires Node 22 or newer.**
 
 ## 1. Install
 
@@ -138,22 +138,42 @@ Namespaces organize credentials. They are not a permission boundary — see
 
 ## 6. Point an MCP client at it
 
-Add CryptoFort to your MCP client's configuration. This example uses SQLite:
+Move the vault's configuration into a file only you can read. This example uses
+SQLite:
+
+```bash
+cat > ~/.cryptofort.env <<'EOF'
+CRYPTOFORT_ADAPTER=sqlite
+CRYPTOFORT_SQLITE_PATH=/absolute/path/to/vault.db
+CRYPTOFORT_MASTER_KEY=the-base64-value
+EOF
+chmod 600 ~/.cryptofort.env
+```
+
+Write a launcher that loads it and starts the server:
+
+```bash
+mkdir -p ~/bin
+cat > ~/bin/cryptofort-mcp-launch <<'EOF'
+#!/usr/bin/env bash
+set -a; . "$HOME/.cryptofort.env"; set +a
+exec cryptofort-mcp "$@"
+EOF
+chmod 700 ~/bin/cryptofort-mcp-launch
+```
+
+And point your MCP client at the launcher:
 
 ```json
 {
   "mcpServers": {
-    "cryptofort": {
-      "command": "cryptofort-mcp",
-      "env": {
-        "CRYPTOFORT_ADAPTER": "sqlite",
-        "CRYPTOFORT_SQLITE_PATH": "/absolute/path/to/vault.db",
-        "CRYPTOFORT_MASTER_KEY": "the-base64-value"
-      }
-    }
+    "cryptofort": { "command": "/Users/you/bin/cryptofort-mcp-launch" }
   }
 }
 ```
+
+Client configs get synced, shared and committed, so the key stays out of this
+one.
 
 As configured, the agent can call `credential_search` and `credential_list` —
 it can describe what the vault holds and change nothing in it. That is the
@@ -173,10 +193,24 @@ To go further, add flags:
 registered, so it cannot be called at all. [The MCP page](mcp.md) covers each
 one and when to use it.
 
+## 7. Run a command with a credential
+
+The agent can now find a credential, but it can't read one. To use one, run the
+command that needs it through `cryptofort run`:
+
+```bash
+cryptofort run --env-file ~/.cryptofort.env stripe-secret-key -- node scripts/refund.js
+```
+
+`refund.js` gets `STRIPE_SECRET_KEY` in its environment, and nothing is printed.
+The command doesn't inherit the master key. [Running commands](run.md) covers
+naming the variables, namespaces and exit codes.
+
 ## Where to go next
 
 - [Configuration](configuration.md) — every environment variable.
 - [Backends](backends.md) — moving off SQLite to Postgres or Supabase.
 - [Library API](api.md) — the full surface.
 - [MCP server](mcp.md) — the tools and the permission model.
+- [Running commands](run.md) — `cryptofort run`, and what it does not protect.
 - [Security model](security.md) — what this protects you from, and what it does not.

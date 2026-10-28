@@ -1,6 +1,7 @@
 # Configuration
 
-CryptoFort's MCP server is configured entirely through environment variables.
+CryptoFort's MCP server and `cryptofort run` are configured entirely through
+environment variables.
 The library takes its configuration as constructor arguments instead — see
 [the API reference](api.md) — so nothing here is required when you build a
 `Vault` yourself.
@@ -135,9 +136,11 @@ With none of them, only `credential_search` and `credential_list` exist. See
 
 ## A note on `.env` files
 
-CryptoFort does not read `.env` files itself — it reads `process.env`. Load them
-with your own tooling (`node --env-file=.env`, `dotenv`, your process manager)
-before the vault starts.
+The library and the MCP server do not read `.env` files themselves — they read
+`process.env`. Load them with your own tooling (`node --env-file=.env`, `dotenv`,
+your process manager, a launcher script) before the vault starts. `cryptofort run`
+also takes `--env-file <path>`, and refuses a file that anyone but its owner can
+read. See [running commands](run.md).
 
 The repository's `.gitignore` already excludes `.env` and `.env.*`. Keep it that
 way: a master key in version control is a master key in every clone, every fork,

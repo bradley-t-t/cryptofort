@@ -14,50 +14,56 @@ Requires `@modelcontextprotocol/sdk` installed alongside CryptoFort.
 
 ## Configuring a client
 
-Point any MCP client at the `cryptofort-mcp` binary:
+The server reads its configuration from its environment. Put that
+configuration, master key included, in a file only you can read:
 
-```json
-{
-  "mcpServers": {
-    "cryptofort": {
-      "command": "cryptofort-mcp",
-      "env": {
-        "CRYPTOFORT_ADAPTER": "supabase",
-        "SUPABASE_URL": "https://<ref>.supabase.co",
-        "SUPABASE_SERVICE_ROLE_KEY": "<service-role-key>",
-        "CRYPTOFORT_MASTER_KEY": "<base64-32-bytes>"
-      }
-    }
-  }
-}
+```bash
+# ~/.cryptofort.env, chmod 600
+CRYPTOFORT_ADAPTER=supabase
+SUPABASE_URL=https://<ref>.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=<service-role-key>
+CRYPTOFORT_MASTER_KEY=<base64-32-bytes>
 ```
 
-Or against a local SQLite file:
+Or, against a local SQLite file:
 
-```json
-{
-  "mcpServers": {
-    "cryptofort": {
-      "command": "cryptofort-mcp",
-      "env": {
-        "CRYPTOFORT_ADAPTER": "sqlite",
-        "CRYPTOFORT_SQLITE_PATH": "/absolute/path/to/vault.db",
-        "CRYPTOFORT_MASTER_KEY": "<base64-32-bytes>"
-      }
-    }
-  }
-}
+```bash
+# ~/.cryptofort.env, chmod 600
+CRYPTOFORT_ADAPTER=sqlite
+CRYPTOFORT_SQLITE_PATH=/absolute/path/to/vault.db
+CRYPTOFORT_MASTER_KEY=<base64-32-bytes>
 ```
 
 Use an **absolute** path: the server's working directory is the client's, not
 yours, so a relative path quietly creates an empty vault somewhere unexpected.
 
-If CryptoFort is not installed globally, run it through npx:
+Then start the server from a launcher that loads the file:
+
+```bash
+#!/usr/bin/env bash
+# ~/bin/cryptofort-mcp-launch, chmod 700
+set -a; . "$HOME/.cryptofort.env"; set +a
+exec cryptofort-mcp "$@"
+```
+
+and point the client at the launcher:
 
 ```json
-"command": "npx",
-"args": ["-y", "cryptofort-mcp"]
+{
+  "mcpServers": {
+    "cryptofort": { "command": "/Users/you/bin/cryptofort-mcp-launch" }
+  }
+}
 ```
+
+The variables could go in the client config's `env` block instead, and the
+server would read them the same way. The launcher exists because client configs
+get synced between machines, shared with teammates and committed to dotfile
+repositories, and a master key in one goes wherever the file goes. `"$@"` passes
+the permission flags below through to the server.
+
+If CryptoFort is not installed globally, end the launcher with
+`exec npx -y cryptofort-mcp "$@"` instead.
 
 [Configuration](configuration.md) lists every variable.
 
@@ -69,9 +75,8 @@ Three flags, given as `args`, decide which tools exist:
 {
   "mcpServers": {
     "cryptofort": {
-      "command": "cryptofort-mcp",
-      "args": ["--allow-write"],
-      "env": { "…": "…" }
+      "command": "/Users/you/bin/cryptofort-mcp-launch",
+      "args": ["--allow-write"]
     }
   }
 }
@@ -94,7 +99,9 @@ The three are separate because they answer different questions:
 - **`--allow-secret-read`** hands a decrypted secret to whoever called it. Give
   it to a process that will use the value and exit — not to an agent whose
   conversation is written to disk. A dedicated session that fetches one
-  credential, runs one operation, and closes is the shape this flag is for.
+  credential, runs one operation, and closes is the shape this flag is for. For
+  running a command with a credential, [`cryptofort run`](run.md) does that
+  without any MCP session at all.
 - **`--allow-write`** covers `credential_put` and `credential_purge_expired`.
   Both are recoverable: a put can be put again, and a purge only removes what an
   expiry had already killed.
@@ -118,6 +125,9 @@ logs after a config change.
 ### `credential_search` — always available
 
 Search by name, description, or provider; filter by tag. Returns metadata only.
+Its description tells the agent that descriptions, tags and metadata are free
+text written by whoever stored the credential, to be treated as data and never
+as instructions. Anyone who can write to the table can write those fields.
 
 | Argument    | Type       | Required |
 | :---------- | :--------- | :------- |
